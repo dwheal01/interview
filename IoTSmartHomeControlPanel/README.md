@@ -1,4 +1,5 @@
 # IoT Smart Home Control Panel
+chatGPT planning logs: https://chatgpt.com/share/692f4cbe-6900-8012-a3c2-3c606d149ef1
 
 A mobile-first smart home dashboard built with React, TypeScript, Vite, and TailwindCSS. Control lights, speakers, fans, thermostat, and locks across multiple rooms with a clean, intuitive interface.
 
