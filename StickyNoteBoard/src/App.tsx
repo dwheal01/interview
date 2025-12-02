@@ -1,5 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
-import type { NoteColor } from './types';
+import { useCallback, useMemo } from 'react';
 import { Toolbar } from './components/Toolbar';
 import { StickyBoard } from './components/StickyBoard';
 import { TrashBin } from './components/TrashBin';
@@ -8,6 +7,7 @@ import { PresenceBar } from './components/PresenceBar';
 import { CanvasProvider, useCanvas } from './context/CanvasContext';
 import { AppModeProvider, useAppMode } from './context/AppModeContext';
 import { UserSessionProvider, useUserSession } from './context/UserSessionContext';
+import { UIStateProvider, useUIState } from './context/UIStateContext';
 import { useNoteOperations } from './hooks/useNoteOperations';
 import { useCollaboration, useCollaborationHeartbeat, useCursorUpdates } from './hooks/useCollaboration';
 import { useBrowserZoomPrevention } from './hooks/useBrowserZoomPrevention';
@@ -37,8 +37,8 @@ function AppContent() {
   useCollaborationHeartbeat(localUser);
   const { handleCursorMove } = useCursorUpdates(localUser);
 
-  // UI state
-  const [activeColor, setActiveColor] = useState<NoteColor>('yellow');
+  // UI state from context
+  const { activeColor, setActiveColor, selectedNoteId } = useUIState();
 
   // Note operations (encapsulates all note CRUD and lock management)
   const noteOperations = useNoteOperations({
@@ -107,7 +107,7 @@ function AppContent() {
       <PresenceBar users={presence} localUserId={localUser.userId} />
       <StickyBoard
         notes={notes}
-        selectedNoteId={noteOperations.selectedNoteId}
+        selectedNoteId={selectedNoteId}
         canvas={canvas}
         mode={mode}
         ghostPosition={ghostPosition}
@@ -139,7 +139,9 @@ function App() {
   return (
     <UserSessionProvider>
       <CanvasProvider>
-        <AppModeProviderWrapper />
+        <UIStateProvider>
+          <AppModeProviderWrapper />
+        </UIStateProvider>
       </CanvasProvider>
     </UserSessionProvider>
   );

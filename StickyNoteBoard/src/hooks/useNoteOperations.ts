@@ -1,13 +1,14 @@
-import { useState, useCallback } from 'react';
-import type { NoteColor, NoteDoc, LocalUser } from '../types';
+import { useCallback } from 'react';
+import type { NoteDoc, LocalUser, NoteColor } from '../types';
 import { noteService } from '../services/noteService';
 import { lockService } from '../services/lockService';
+import { useUIState } from '../context/UIStateContext';
 
 type UseNoteOperationsParams = {
   localUser: LocalUser | null;
   locks: Record<string, any>;
   notes: NoteDoc[];
-  activeColor: NoteColor;
+  activeColor: NoteColor; // From UIState context
   nextZIndex: number;
   setNextZIndex: (value: number | ((prev: number) => number)) => void;
   setMode: (mode: 'idle' | 'adding' | 'dragging' | 'panning') => void;
@@ -17,9 +18,6 @@ type UseNoteOperationsParams = {
 };
 
 type UseNoteOperationsReturn = {
-  selectedNoteId: string | null;
-  setSelectedNoteId: (id: string | null) => void;
-  editingNoteId: string | null;
   onPlaceNote: (canvasX: number, canvasY: number) => Promise<void>;
   onUpdateNote: (noteId: string, fields: Partial<NoteDoc>) => Promise<void>;
   onSelectNote: (id: string | null) => void;
@@ -46,8 +44,8 @@ export function useNoteOperations({
   setIsOverTrash,
   exitAddMode,
 }: UseNoteOperationsParams): UseNoteOperationsReturn {
-  const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
-  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  // Get UI state from context instead of managing it here
+  const { selectedNoteId, setSelectedNoteId, editingNoteId, setEditingNoteId } = useUIState();
 
   const onPlaceNote = useCallback(
     async (canvasX: number, canvasY: number) => {
@@ -159,9 +157,6 @@ export function useNoteOperations({
   );
 
   return {
-    selectedNoteId,
-    setSelectedNoteId,
-    editingNoteId,
     onPlaceNote,
     onUpdateNote,
     onSelectNote,

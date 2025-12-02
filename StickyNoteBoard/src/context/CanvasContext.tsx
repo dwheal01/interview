@@ -1,8 +1,9 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import type { CanvasTransform } from '../types';
-import { STORAGE_KEY_CANVAS, DEFAULT_SCALE } from '../constants';
+import { DEFAULT_SCALE } from '../constants';
 import { calculateZoom, calculateFitToView } from '../utils/zoomUtils';
+import { statePersistence } from '../services/statePersistence';
 
 type CanvasContextType = {
   canvas: CanvasTransform;
@@ -25,30 +26,20 @@ export function CanvasProvider({ children }: { children: ReactNode }) {
   const [nextZIndex, setNextZIndex] = useState(1);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Load canvas from localStorage
+  // Load canvas from localStorage using state persistence service
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY_CANVAS);
-      if (raw) {
-        const persisted = JSON.parse(raw);
-        setCanvas(persisted.canvas || { scale: DEFAULT_SCALE, offsetX: 0, offsetY: 0 });
-        setNextZIndex(persisted.nextZIndex || 1);
-      }
-    } catch (e) {
-      console.error('Failed to load canvas from localStorage:', e);
-    } finally {
-      setIsLoaded(true);
+    const persisted = statePersistence.loadCanvas();
+    if (persisted) {
+      setCanvas(persisted.canvas || { scale: DEFAULT_SCALE, offsetX: 0, offsetY: 0 });
+      setNextZIndex(persisted.nextZIndex || 1);
     }
+    setIsLoaded(true);
   }, []);
 
-  // Persist canvas to localStorage
+  // Persist canvas to localStorage using state persistence service
   useEffect(() => {
     if (!isLoaded) return;
-    try {
-      localStorage.setItem(STORAGE_KEY_CANVAS, JSON.stringify({ canvas, nextZIndex }));
-    } catch (e) {
-      console.error('Failed to save canvas to localStorage:', e);
-    }
+    statePersistence.saveCanvas(canvas, nextZIndex);
   }, [canvas, nextZIndex, isLoaded]);
 
   const onPan = useCallback((deltaX: number, deltaY: number) => {
