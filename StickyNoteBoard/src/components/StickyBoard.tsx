@@ -84,21 +84,28 @@ export function StickyBoard({
 
   // Check if note card overlaps with trash
   const checkTrashOverlap = (note: Note) => {
+    if (!boardRef.current) {
+      setIsOverTrash(false);
+      return;
+    }
+
     const trashSize = 48;
     const trashRight = window.innerWidth - 16;
     const trashBottom = window.innerHeight - 16;
     const trashLeft = trashRight - trashSize;
     const trashTop = trashBottom - trashSize;
 
-    // Get note's screen position and size
+    // Get note's screen position relative to board
+    const boardRect = boardRef.current.getBoundingClientRect();
     const screenPos = canvasToScreen(note.x, note.y);
     const noteSize = 176 * canvas.scale; // w-44 = 176px
     
+    // Convert to window/client coordinates
     const noteRect = {
-      left: screenPos.x,
-      top: screenPos.y,
-      right: screenPos.x + noteSize,
-      bottom: screenPos.y + noteSize,
+      left: boardRect.left + screenPos.x,
+      top: boardRect.top + screenPos.y,
+      right: boardRect.left + screenPos.x + noteSize,
+      bottom: boardRect.top + screenPos.y + noteSize,
     };
 
     const trashRect = {
