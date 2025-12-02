@@ -21,7 +21,17 @@ export function Toolbar({
   return (
     <div 
       className="fixed top-0 left-0 right-0 h-14 flex items-center px-4 gap-4 bg-white shadow z-50"
-      style={{ transform: 'none', willChange: 'auto' }}
+      style={{ 
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        transform: 'scale(1)',
+        transformOrigin: '0 0',
+        willChange: 'auto',
+        isolation: 'isolate',
+        contain: 'layout style paint'
+      }}
     >
       <div className="text-sm font-semibold">Sticky Canvas</div>
       

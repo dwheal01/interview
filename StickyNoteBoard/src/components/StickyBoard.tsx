@@ -110,6 +110,8 @@ export function StickyBoard({
   };
 
   const handleWheel = (event: React.WheelEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
     if (!boardRef.current) return;
     const rect = boardRef.current.getBoundingClientRect();
     const screenX = event.clientX - rect.left;

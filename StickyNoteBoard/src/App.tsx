@@ -19,6 +19,31 @@ function App() {
   const [isOverTrash, setIsOverTrash] = useState(false);
   const [nextZIndex, setNextZIndex] = useState(1);
 
+  // Prevent browser zoom shortcuts
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      // Prevent zoom with Ctrl/Cmd + scroll
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Prevent zoom with Ctrl/Cmd + +/-/0
+      if ((e.ctrlKey || e.metaKey) && (e.key === '=' || e.key === '-' || e.key === '0' || e.key === '+' || e.key === '_')) {
+        e.preventDefault();
+      }
+    };
+
+    window.addEventListener('wheel', handleWheel, { passive: false });
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('wheel', handleWheel);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
   // Load from localStorage on mount
   useEffect(() => {
     try {
@@ -211,7 +236,7 @@ function App() {
   };
 
   return (
-    <div>
+    <div style={{ transform: 'none' }}>
       <Toolbar
         activeColor={activeColor}
         onColorChange={setActiveColor}
