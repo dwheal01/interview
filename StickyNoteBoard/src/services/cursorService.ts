@@ -1,8 +1,7 @@
 import { doc, setDoc } from 'firebase/firestore';
 import type { LocalUser } from '../types';
 import { isFirebaseEnabled, getDb, WORKSPACE_ID } from '../config/firebase';
-
-const CURSOR_THROTTLE_MS = 100;
+import { CURSOR_THROTTLE_MS } from '../constants';
 
 // Throttle cursor updates to reduce Firestore writes
 let cursorUpdateThrottle: ReturnType<typeof setTimeout> | null = null;

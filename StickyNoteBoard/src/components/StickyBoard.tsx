@@ -2,6 +2,8 @@ import { useRef, useState, useEffect } from 'react';
 import type { NoteDoc, CanvasTransform, LockDoc, CursorDoc } from '../types';
 import { NoteCard } from './NoteCard';
 import { RemoteCursorsLayer } from './RemoteCursorsLayer';
+import { ZOOM_IN_FACTOR, ZOOM_OUT_FACTOR, DRAG_THRESHOLD_PX, GRID_SIZE } from '../constants';
+import { checkTrashOverlap as checkTrashOverlapUtil } from '../utils/collisionDetection';
 
 type AppMode = "idle" | "adding" | "dragging" | "panning";
 
@@ -83,18 +85,6 @@ export function StickyBoard({
     return { x: canvasX, y: canvasY };
   };
 
-  // Convert canvas coordinates to screen coordinates
-  const canvasToScreen = (canvasX: number, canvasY: number): { x: number; y: number } => {
-    if (!boardRef.current) return { x: 0, y: 0 };
-    const rect = boardRef.current.getBoundingClientRect();
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-    
-    const screenX = centerX + canvas.offsetX + canvasX * canvas.scale;
-    const screenY = centerY + canvas.offsetY + canvasY * canvas.scale;
-    return { x: screenX, y: screenY };
-  };
-
   // Check if note card overlaps with trash
   const checkTrashOverlap = (note: NoteDoc) => {
     if (!boardRef.current) {
@@ -102,49 +92,8 @@ export function StickyBoard({
       return;
     }
 
-    const trashSize = 48;
-    const trashRight = window.innerWidth - 16;
-    const trashBottom = window.innerHeight - 16;
-    const trashLeft = trashRight - trashSize;
-    const trashTop = trashBottom - trashSize;
-
-    // Get note's screen position relative to board
     const boardRect = boardRef.current.getBoundingClientRect();
-    const screenPos = canvasToScreen(note.x, note.y);
-    const noteWidth = 176 * canvas.scale; // w-44 = 176px
-    
-    // Try to find the actual note element to get its real height
-    // If not found, use default height
-    let noteHeight = 176 * canvas.scale; // Default h-44 = 176px
-    const noteElement = document.querySelector(`[data-note-id="${note.id}"]`) as HTMLElement;
-    if (noteElement) {
-      const elementRect = noteElement.getBoundingClientRect();
-      noteHeight = elementRect.height;
-    }
-    
-    // Convert to window/client coordinates
-    const noteRect = {
-      left: boardRect.left + screenPos.x,
-      top: boardRect.top + screenPos.y,
-      right: boardRect.left + screenPos.x + noteWidth,
-      bottom: boardRect.top + screenPos.y + noteHeight,
-    };
-
-    const trashRect = {
-      left: trashLeft,
-      top: trashTop,
-      right: trashRight,
-      bottom: trashBottom,
-    };
-
-    // Check if rectangles overlap
-    const overlaps = !(
-      noteRect.right < trashRect.left ||
-      noteRect.left > trashRect.right ||
-      noteRect.bottom < trashRect.top ||
-      noteRect.top > trashRect.bottom
-    );
-
+    const overlaps = checkTrashOverlapUtil(note, canvas, boardRect);
     setIsOverTrash(overlaps);
   };
 
@@ -163,7 +112,7 @@ export function StickyBoard({
       const rect = boardRef.current.getBoundingClientRect();
       const screenX = event.clientX - rect.left;
       const screenY = event.clientY - rect.top;
-      const zoomFactor = event.deltaY < 0 ? 1.1 : 0.9;
+      const zoomFactor = event.deltaY < 0 ? ZOOM_IN_FACTOR : ZOOM_OUT_FACTOR;
       onZoomRef.current(zoomFactor, screenX, screenY);
     };
 
@@ -230,9 +179,9 @@ export function StickyBoard({
       const deltaScreenX = screenX - dragState.startMouseX;
       const deltaScreenY = screenY - dragState.startMouseY;
       
-      // Only start dragging if mouse moved more than 3px
+      // Only start dragging if mouse moved more than threshold
       const distance = Math.sqrt(deltaScreenX * deltaScreenX + deltaScreenY * deltaScreenY);
-      if (distance > 3) {
+      if (distance > DRAG_THRESHOLD_PX) {
         if (!isDragging) {
           setIsDragging(true);
           const canvasPos = screenToCanvas(e.clientX, e.clientY);
@@ -319,7 +268,7 @@ export function StickyBoard({
         className="w-full h-full relative"
         style={{
           backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(0,0,0,0.06) 1px, transparent 0)',
-          backgroundSize: '20px 20px',
+          backgroundSize: `${GRID_SIZE}px ${GRID_SIZE}px`,
         }}
         onMouseDown={handleMouseDownCanvas}
         onMouseMove={handleMouseMoveCanvas}

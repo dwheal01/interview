@@ -1,8 +1,7 @@
 import { doc, setDoc, deleteDoc } from 'firebase/firestore';
 import type { LocalUser } from '../types';
 import { isFirebaseEnabled, getDb, WORKSPACE_ID } from '../config/firebase';
-
-const HEARTBEAT_MS = 15_000;
+import { PRESENCE_HEARTBEAT_MS } from '../constants';
 
 /**
  * Service for presence operations
@@ -47,7 +46,7 @@ export const presenceService = {
   },
 
   getHeartbeatInterval(): number {
-    return HEARTBEAT_MS;
+    return PRESENCE_HEARTBEAT_MS;
   },
 };
 

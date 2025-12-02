@@ -1,12 +1,11 @@
 import type { CursorDoc } from '../types';
 import type { CanvasTransform } from '../types';
+import { CURSOR_TIMEOUT_MS, CURSOR_SIZE, CURSOR_LABEL_MARGIN_LEFT, CURSOR_LABEL_MARGIN_TOP, CURSOR_LABEL_FONT_SIZE } from '../constants';
 
 type RemoteCursorsLayerProps = {
   cursors: CursorDoc[];
   canvas?: CanvasTransform; // Not used but kept for potential future use
 };
-
-const CURSOR_TIMEOUT_MS = 10_000;
 
 export function RemoteCursorsLayer({ cursors }: RemoteCursorsLayerProps) {
   const now = Date.now();
@@ -27,10 +26,21 @@ export function RemoteCursorsLayer({ cursors }: RemoteCursorsLayerProps) {
             style={{ left: cursor.canvasX, top: cursor.canvasY }}
           >
             <div
-              className="w-3 h-3 rounded-full border border-white shadow"
-              style={{ backgroundColor: cursor.color }}
+              className="rounded-full border border-white shadow"
+              style={{ 
+                backgroundColor: cursor.color,
+                width: `${CURSOR_SIZE}px`,
+                height: `${CURSOR_SIZE}px`,
+              }}
             />
-            <div className="ml-4 -mt-3 px-1 rounded text-[10px] bg-white/80 text-gray-800">
+            <div 
+              className="px-1 rounded bg-white/80 text-gray-800"
+              style={{
+                marginLeft: `${CURSOR_LABEL_MARGIN_LEFT}px`,
+                marginTop: `${CURSOR_LABEL_MARGIN_TOP}px`,
+                fontSize: `${CURSOR_LABEL_FONT_SIZE}px`,
+              }}
+            >
               {cursor.username}
             </div>
           </div>

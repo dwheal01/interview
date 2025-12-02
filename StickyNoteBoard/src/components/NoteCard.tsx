@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import type { NoteDoc, NoteColor, LockDoc } from '../types';
+import { BLUR_DELAY_MS, TEXTAREA_MIN_HEIGHT } from '../constants';
 
 type NoteCardProps = {
   note: NoteDoc;
@@ -53,7 +54,7 @@ export function NoteCard({
       if (!document.activeElement?.closest('.note-card-input')) {
         onStopEdit();
       }
-    }, 100);
+    }, BLUR_DELAY_MS);
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -102,7 +103,7 @@ export function NoteCard({
         placeholder="Note..."
         readOnly={lockedByOther}
         rows={1}
-        style={{ minHeight: '1.5rem' }}
+        style={{ minHeight: TEXTAREA_MIN_HEIGHT }}
       />
       {lockedByOther && (
         <div className="absolute inset-0 bg-gray-300/60 flex items-end justify-end px-1 py-1 pointer-events-none">
