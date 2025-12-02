@@ -1,12 +1,7 @@
 import { useState, useCallback } from 'react';
 import type { NoteColor, NoteDoc, LocalUser } from '../types';
-import {
-  createNote,
-  updateNote,
-  deleteNote,
-  acquireLock,
-  releaseLock,
-} from './useFirestore';
+import { noteService } from '../services/noteService';
+import { lockService } from '../services/lockService';
 
 type UseNoteOperationsParams = {
   localUser: LocalUser | null;
@@ -72,7 +67,7 @@ export function useNoteOperations({
         updatedAt: Date.now(),
       };
 
-      await createNote(newNote);
+      await noteService.createNote(newNote);
       setNextZIndex((prev) => prev + 1);
       setSelectedNoteId(id);
     },
@@ -85,7 +80,7 @@ export function useNoteOperations({
       const lock = locks[noteId];
       if (lock && lock.userId !== localUser.userId) return;
 
-      await updateNote(noteId, fields);
+      await noteService.updateNote(noteId, fields);
     },
     [localUser, locks]
   );
@@ -106,7 +101,7 @@ export function useNoteOperations({
         return;
       }
       setEditingNoteId(noteId);
-      await acquireLock(noteId, localUser);
+      await lockService.acquireLock(noteId, localUser);
     },
     [localUser, locks]
   );
@@ -114,7 +109,7 @@ export function useNoteOperations({
   const onStopEdit = useCallback(async (noteId: string) => {
     if (editingNoteId === noteId) {
       setEditingNoteId(null);
-      await releaseLock(noteId);
+      await lockService.releaseLock(noteId);
     }
   }, [editingNoteId]);
 
@@ -130,7 +125,7 @@ export function useNoteOperations({
       // Increase z-index
       const note = notes.find((n) => n.id === id);
       if (note) {
-        await updateNote(id, { zIndex: nextZIndex });
+        await noteService.updateNote(id, { zIndex: nextZIndex });
         setNextZIndex((prev) => prev + 1);
       }
     },
@@ -143,7 +138,7 @@ export function useNoteOperations({
       const lock = locks[id];
       if (lock && lock.userId !== localUser.userId) return;
 
-      await updateNote(id, { x: newCanvasX, y: newCanvasY });
+      await noteService.updateNote(id, { x: newCanvasX, y: newCanvasY });
     },
     [localUser, locks]
   );
@@ -151,7 +146,7 @@ export function useNoteOperations({
   const onEndDragNote = useCallback(
     async (id: string, isOverTrash: boolean) => {
       if (isOverTrash) {
-        await deleteNote(id);
+        await noteService.deleteNote(id);
         if (selectedNoteId === id) {
           setSelectedNoteId(null);
         }

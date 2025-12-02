@@ -1,24 +1,20 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
-import {
-  useNotes,
-  useLocks,
-  usePresence,
-  useCursors,
-  usePresenceHeartbeat,
-  createNote,
-  updateNote,
-  deleteNote,
-  acquireLock,
-  releaseLock,
-  updateCursor,
-} from './useFirestore';
+import { useNotesSubscription as useNotes } from './useNotesSubscription';
+import { useLocksSubscription as useLocks } from './useLocksSubscription';
+import { usePresenceSubscription as usePresence } from './usePresenceSubscription';
+import { useCursorsSubscription as useCursors } from './useCursorsSubscription';
+import { usePresenceHeartbeat } from './usePresenceHeartbeat';
+import { noteService } from '../services/noteService';
+import { lockService } from '../services/lockService';
+import { cursorService } from '../services/cursorService';
 import {
   mockFirestore,
   createMockSnapshot,
   createMockDoc,
   mockCollection,
   mockQuery,
+  mockDoc,
 } from '../test/mocks/firebase';
 import { setupLocalStorageMock, clearLocalStorageMock } from '../test/mocks/localStorage';
 import { createMockNote, createMockUser } from '../test/utils/testUtils';
@@ -34,6 +30,17 @@ vi.mock('../config/firebase', async () => {
     WORKSPACE_ID: 'default',
   };
 });
+
+// Mock the services to use the mocked Firestore
+vi.mock('../services/storageAdapter', () => ({
+  LocalStorageAdapter: vi.fn().mockImplementation(() => ({
+    getNotes: vi.fn().mockResolvedValue([]),
+    saveNotes: vi.fn().mockResolvedValue(undefined),
+    createNote: vi.fn().mockResolvedValue(undefined),
+    updateNote: vi.fn().mockResolvedValue(undefined),
+    deleteNote: vi.fn().mockResolvedValue(undefined),
+  })),
+}));
 
 describe('useFirestore hooks', () => {
   beforeEach(() => {
@@ -88,7 +95,7 @@ describe('useFirestore hooks', () => {
       expect(result.current[1]).toMatchObject(mockNote2);
     });
 
-    it('should fallback to localStorage when Firebase is disabled', () => {
+    it('should fallback to localStorage when Firebase is disabled', async () => {
       vi.mocked(firebaseConfig.isFirebaseEnabled).mockReturnValue(false);
       
       const storedNotes = [
@@ -99,7 +106,9 @@ describe('useFirestore hooks', () => {
 
       const { result } = renderHook(() => useNotes());
 
-      expect(result.current).toHaveLength(2);
+      await waitFor(() => {
+        expect(result.current).toHaveLength(2);
+      });
       expect(localStorage.getItem).toHaveBeenCalledWith('sticky-board-notes');
     });
 
@@ -309,7 +318,7 @@ describe('useFirestore hooks', () => {
       const note = createMockNote();
       mockFirestore.setDoc.mockResolvedValue(undefined);
 
-      await createNote(note);
+      await noteService.createNote(note);
 
       expect(mockFirestore.setDoc).toHaveBeenCalledWith(
         expect.anything(),
@@ -321,7 +330,7 @@ describe('useFirestore hooks', () => {
       vi.mocked(firebaseConfig.isFirebaseEnabled).mockReturnValue(false);
       const note = createMockNote();
 
-      await createNote(note);
+      await noteService.createNote(note);
 
       const stored = JSON.parse(localStorage.getItem('sticky-board-notes') || '[]');
       expect(stored).toHaveLength(1);
@@ -336,7 +345,7 @@ describe('useFirestore hooks', () => {
       const updates = { title: 'Updated Title' };
       mockFirestore.updateDoc.mockResolvedValue(undefined);
 
-      await updateNote(noteId, updates);
+      await noteService.updateNote(noteId, updates);
 
       expect(mockFirestore.updateDoc).toHaveBeenCalledWith(
         expect.anything(),
@@ -349,7 +358,7 @@ describe('useFirestore hooks', () => {
       const note = createMockNote({ id: 'note-1', title: 'Original' });
       localStorage.setItem('sticky-board-notes', JSON.stringify([note]));
 
-      await updateNote('note-1', { title: 'Updated' });
+      await noteService.updateNote('note-1', { title: 'Updated' });
 
       const stored = JSON.parse(localStorage.getItem('sticky-board-notes') || '[]');
       expect(stored[0].title).toBe('Updated');
@@ -362,7 +371,7 @@ describe('useFirestore hooks', () => {
       const noteId = 'note-1';
       mockFirestore.deleteDoc.mockResolvedValue(undefined);
 
-      await deleteNote(noteId);
+      await noteService.deleteNote(noteId);
 
       expect(mockFirestore.deleteDoc).toHaveBeenCalledTimes(2); // Note + lock
     });
@@ -390,7 +399,7 @@ describe('useFirestore hooks', () => {
       const user = createMockUser();
       mockFirestore.setDoc.mockResolvedValue(undefined);
 
-      await acquireLock(noteId, user);
+      await lockService.acquireLock(noteId, user);
 
       expect(mockFirestore.setDoc).toHaveBeenCalledWith(
         expect.anything(),
@@ -409,7 +418,7 @@ describe('useFirestore hooks', () => {
       const noteId = 'note-1';
       mockFirestore.deleteDoc.mockResolvedValue(undefined);
 
-      await releaseLock(noteId);
+      await lockService.releaseLock(noteId);
 
       expect(mockFirestore.deleteDoc).toHaveBeenCalled();
     });
@@ -423,9 +432,9 @@ describe('useFirestore hooks', () => {
       mockFirestore.setDoc.mockResolvedValue(undefined);
 
       // Call multiple times rapidly
-      updateCursor(100, 100, user);
-      updateCursor(110, 110, user);
-      updateCursor(120, 120, user);
+      cursorService.updateCursor(100, 100, user);
+      cursorService.updateCursor(110, 110, user);
+      cursorService.updateCursor(120, 120, user);
 
       // Only first call should go through immediately
       await waitFor(() => {
@@ -434,7 +443,7 @@ describe('useFirestore hooks', () => {
 
       // After throttle period, next call should go through
       vi.advanceTimersByTime(100);
-      updateCursor(130, 130, user);
+      cursorService.updateCursor(130, 130, user);
 
       await waitFor(() => {
         expect(mockFirestore.setDoc).toHaveBeenCalledTimes(2);
