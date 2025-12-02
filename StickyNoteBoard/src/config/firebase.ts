@@ -1,16 +1,15 @@
 import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 
-// Firebase configuration
-// TODO: Replace with your Firebase project config
+// Firebase configuration from environment variables
 const firebaseConfig = {
-  apiKey: "AIzaSyBqlmCg529ILuG0DoxhYeVvrw11SUOCJzw",
-  authDomain: "stickynoteboard.firebaseapp.com",
-  projectId: "stickynoteboard",
-  storageBucket: "stickynoteboard.firebasestorage.app",
-  messagingSenderId: "388409253226",
-  appId: "1:388409253226:web:c9ec4fb0886af28b8cd913",
-  measurementId: "G-ZRWLYH7F2R"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "your-api-key",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "your-project.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "your-project-id",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "your-project.appspot.com",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "123456789",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "your-app-id",
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || ""
 };
 
 // Check if Firebase is properly configured
