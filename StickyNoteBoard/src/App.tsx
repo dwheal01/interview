@@ -18,6 +18,7 @@ function App() {
   const [draggingNoteId, setDraggingNoteId] = useState<string | null>(null);
   const [isOverTrash, setIsOverTrash] = useState(false);
   const [nextZIndex, setNextZIndex] = useState(1);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   // Prevent browser zoom shortcuts
   useEffect(() => {
@@ -56,11 +57,16 @@ function App() {
       }
     } catch (e) {
       console.error('Failed to load from localStorage:', e);
+    } finally {
+      setIsLoaded(true);
     }
   }, []);
 
   // Persist to localStorage whenever notes, canvas, or nextZIndex changes
+  // Only save after initial load is complete to avoid overwriting with empty state
   useEffect(() => {
+    if (!isLoaded) return;
+    
     try {
       const persisted: PersistedState = {
         notes,
@@ -71,7 +77,7 @@ function App() {
     } catch (e) {
       console.error('Failed to save to localStorage:', e);
     }
-  }, [notes, canvas, nextZIndex]);
+  }, [notes, canvas, nextZIndex, isLoaded]);
 
   // Update ghost position on mouse move in add mode
   useEffect(() => {
