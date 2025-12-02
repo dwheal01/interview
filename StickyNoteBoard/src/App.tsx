@@ -106,14 +106,27 @@ function App() {
     };
   }, []);
 
+  // Use ref to track if we're in add mode to prevent race conditions
+  const isAddingModeRef = useRef(false);
+
   // Update ghost position on mouse move in add mode
   useEffect(() => {
-    if (mode !== "adding") {
+    const isAdding = mode === "adding";
+    isAddingModeRef.current = isAdding;
+    
+    if (!isAdding) {
+      // Immediately clear ghost position when not in add mode
       setGhostPosition(null);
       return;
     }
 
     const handleMouseMove = (e: MouseEvent) => {
+      // Double-check ref to ensure we're still in add mode (handles race conditions)
+      if (!isAddingModeRef.current) {
+        setGhostPosition(null);
+        return;
+      }
+      
       const viewportWidth = window.innerWidth;
       const viewportHeight = window.innerHeight - 56;
       const centerX = viewportWidth / 2;
@@ -125,11 +138,19 @@ function App() {
       const canvasX = (screenX - centerX - canvas.offsetX) / canvas.scale;
       const canvasY = (screenY - centerY - canvas.offsetY) / canvas.scale;
       
-      setGhostPosition({ x: canvasX, y: canvasY });
+      // Only set if still in add mode
+      if (isAddingModeRef.current) {
+        setGhostPosition({ x: canvasX, y: canvasY });
+      }
     };
 
     window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      // Clear ghost position when listener is removed
+      setGhostPosition(null);
+      isAddingModeRef.current = false;
+    };
   }, [mode, canvas]);
 
   const handleJoin = (username: string) => {
@@ -141,10 +162,16 @@ function App() {
   const onAddNoteMode = () => {
     setMode("adding");
     setGhostPosition(null);
+    isAddingModeRef.current = true;
   };
 
   const onPlaceNote = async (canvasX: number, canvasY: number) => {
     if (!localUser) return;
+    
+    // Exit add mode IMMEDIATELY before any async operations
+    isAddingModeRef.current = false;
+    setMode("idle");
+    setGhostPosition(null);
     
     const id = crypto.randomUUID?.() ?? String(Date.now());
     const newNote: NoteDoc = {
@@ -161,8 +188,6 @@ function App() {
     await createNote(newNote);
     setNextZIndex(prev => prev + 1);
     setSelectedNoteId(id);
-    setMode("idle");
-    setGhostPosition(null);
   };
 
   const onUpdateNote = async (noteId: string, fields: Partial<NoteDoc>) => {
@@ -175,6 +200,12 @@ function App() {
 
   const onSelectNote = (id: string | null) => {
     setSelectedNoteId(id);
+    // Exit add mode if selecting a note
+    if (mode === "adding") {
+      isAddingModeRef.current = false; // Update ref immediately
+      setMode("idle");
+      setGhostPosition(null);
+    }
   };
 
   const onStartEdit = async (noteId: string) => {
@@ -202,6 +233,7 @@ function App() {
     
     setMode("dragging");
     setDraggingNoteId(id);
+    setGhostPosition(null); // Clear ghost when starting to drag
     
     // Increase z-index
     const note = notes.find(n => n.id === id);
@@ -294,6 +326,9 @@ function App() {
   const handleCanvasClick = (canvasX: number, canvasY: number) => {
     if (mode === "adding") {
       onPlaceNote(canvasX, canvasY);
+    } else {
+      // Clear ghost position if clicking outside add mode
+      setGhostPosition(null);
     }
   };
 
