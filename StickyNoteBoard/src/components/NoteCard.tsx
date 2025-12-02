@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import type { NoteDoc, NoteColor, LockDoc } from '../types';
 
 type NoteCardProps = {
@@ -31,6 +32,16 @@ export function NoteCard({
   onStopEdit 
 }: NoteCardProps) {
   const lockedByOther = !!(lock && lock.userId !== localUserId);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Auto-resize textarea based on content
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = `${textarea.scrollHeight}px`;
+    }
+  }, [note.content]);
 
   const handleFocus = () => {
     onStartEdit();
@@ -54,9 +65,17 @@ export function NoteCard({
     onMouseDown(e);
   };
 
+  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    onChange({ content: e.target.value });
+    // Auto-resize on change
+    e.target.style.height = 'auto';
+    e.target.style.height = `${e.target.scrollHeight}px`;
+  };
+
   return (
     <div
-      className={`absolute w-44 h-44 border shadow-sm flex flex-col p-2 text-sm select-none ${
+      data-note-id={note.id}
+      className={`absolute w-44 min-h-44 border shadow-sm flex flex-col p-2 text-sm select-none ${
         lockedByOther ? 'cursor-not-allowed' : 'cursor-move'
       } ${noteColorClasses(note.color)} ${isSelected ? 'shadow-[0_0_0_2px_rgba(0,0,0,0.3)]' : ''}`}
       style={{ left: note.x, top: note.y, zIndex: note.zIndex }}
@@ -73,14 +92,17 @@ export function NoteCard({
         readOnly={lockedByOther}
       />
       <textarea
-        className="note-card-input flex-1 w-full border-none bg-transparent text-xs resize-none outline-none placeholder-gray-400"
+        ref={textareaRef}
+        className="note-card-input w-full border-none bg-transparent text-xs resize-none outline-none placeholder-gray-400 overflow-hidden"
         value={note.content}
-        onChange={(e) => onChange({ content: e.target.value })}
+        onChange={handleTextareaChange}
         onFocus={handleFocus}
         onBlur={handleBlur}
         onClick={(e) => e.stopPropagation()}
         placeholder="Note..."
         readOnly={lockedByOther}
+        rows={1}
+        style={{ minHeight: '1.5rem' }}
       />
       {lockedByOther && (
         <div className="absolute inset-0 bg-gray-300/60 flex items-end justify-end px-1 py-1 pointer-events-none">

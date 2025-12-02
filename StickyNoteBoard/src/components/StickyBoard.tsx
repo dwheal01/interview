@@ -113,14 +113,23 @@ export function StickyBoard({
     // Get note's screen position relative to board
     const boardRect = boardRef.current.getBoundingClientRect();
     const screenPos = canvasToScreen(note.x, note.y);
-    const noteSize = 176 * canvas.scale; // w-44 = 176px
+    const noteWidth = 176 * canvas.scale; // w-44 = 176px
+    
+    // Try to find the actual note element to get its real height
+    // If not found, use default height
+    let noteHeight = 176 * canvas.scale; // Default h-44 = 176px
+    const noteElement = document.querySelector(`[data-note-id="${note.id}"]`) as HTMLElement;
+    if (noteElement) {
+      const elementRect = noteElement.getBoundingClientRect();
+      noteHeight = elementRect.height;
+    }
     
     // Convert to window/client coordinates
     const noteRect = {
       left: boardRect.left + screenPos.x,
       top: boardRect.top + screenPos.y,
-      right: boardRect.left + screenPos.x + noteSize,
-      bottom: boardRect.top + screenPos.y + noteSize,
+      right: boardRect.left + screenPos.x + noteWidth,
+      bottom: boardRect.top + screenPos.y + noteHeight,
     };
 
     const trashRect = {
@@ -344,7 +353,7 @@ export function StickyBoard({
           
           {mode === "adding" && ghostPosition && (
             <div
-              className={`absolute w-44 h-44 border shadow-sm flex flex-col p-2 text-sm pointer-events-none opacity-50 ${
+              className={`absolute w-44 min-h-44 border shadow-sm flex flex-col p-2 text-sm pointer-events-none opacity-50 ${
                 noteColorClasses(activeColor)
               }`}
               style={{ left: ghostPosition.x, top: ghostPosition.y }}
@@ -352,7 +361,7 @@ export function StickyBoard({
               <div className="w-full border-none bg-transparent font-semibold text-xs mb-1">
                 New Note
               </div>
-              <div className="flex-1 w-full border-none bg-transparent text-xs">
+              <div className="w-full border-none bg-transparent text-xs">
                 Click to place
               </div>
             </div>
