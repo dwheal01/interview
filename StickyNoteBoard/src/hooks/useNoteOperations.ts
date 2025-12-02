@@ -3,6 +3,7 @@ import type { NoteDoc, LocalUser, NoteColor } from '../types';
 import { noteService } from '../services/noteService';
 import { lockService } from '../services/lockService';
 import { useUIState } from '../context/UIStateContext';
+import { useErrorNotification } from '../context/ErrorNotificationContext';
 
 type UseNoteOperationsParams = {
   localUser: LocalUser | null;
@@ -46,6 +47,7 @@ export function useNoteOperations({
 }: UseNoteOperationsParams): UseNoteOperationsReturn {
   // Get UI state from context instead of managing it here
   const { selectedNoteId, setSelectedNoteId, editingNoteId, setEditingNoteId } = useUIState();
+  const { showError } = useErrorNotification();
 
   const onPlaceNote = useCallback(
     async (canvasX: number, canvasY: number) => {
@@ -65,11 +67,15 @@ export function useNoteOperations({
         updatedAt: Date.now(),
       };
 
-      await noteService.createNote(newNote);
+      const result = await noteService.createNote(newNote);
+      if (!result.success) {
+        showError(result.message, 'error');
+        return;
+      }
       setNextZIndex((prev) => prev + 1);
       setSelectedNoteId(id);
     },
-    [localUser, activeColor, nextZIndex, setNextZIndex, exitAddMode]
+    [localUser, activeColor, nextZIndex, setNextZIndex, exitAddMode, showError]
   );
 
   const onUpdateNote = useCallback(
@@ -78,9 +84,12 @@ export function useNoteOperations({
       const lock = locks[noteId];
       if (lock && lock.userId !== localUser.userId) return;
 
-      await noteService.updateNote(noteId, fields);
+      const result = await noteService.updateNote(noteId, fields);
+      if (!result.success) {
+        showError(result.message, result.message.includes('locally') ? 'warning' : 'error');
+      }
     },
-    [localUser, locks]
+    [localUser, locks, showError]
   );
 
   const onSelectNote = useCallback(
@@ -99,15 +108,25 @@ export function useNoteOperations({
         return;
       }
       setEditingNoteId(noteId);
-      await lockService.acquireLock(noteId, localUser);
+      try {
+        await lockService.acquireLock(noteId, localUser);
+      } catch (error) {
+        setEditingNoteId(null);
+        showError('Failed to acquire edit lock. Another user may be editing this note.', 'error');
+      }
     },
-    [localUser, locks]
+    [localUser, locks, showError]
   );
 
   const onStopEdit = useCallback(async (noteId: string) => {
     if (editingNoteId === noteId) {
       setEditingNoteId(null);
-      await lockService.releaseLock(noteId);
+      try {
+        await lockService.releaseLock(noteId);
+      } catch (error) {
+        // Non-critical error, just log it
+        console.error('Failed to release lock:', error);
+      }
     }
   }, [editingNoteId]);
 
@@ -123,11 +142,15 @@ export function useNoteOperations({
       // Increase z-index
       const note = notes.find((n) => n.id === id);
       if (note) {
-        await noteService.updateNote(id, { zIndex: nextZIndex });
+        const result = await noteService.updateNote(id, { zIndex: nextZIndex });
+        if (!result.success) {
+          showError(result.message, result.message.includes('locally') ? 'warning' : 'error');
+          return;
+        }
         setNextZIndex((prev) => prev + 1);
       }
     },
-    [localUser, locks, notes, nextZIndex, setNextZIndex, setMode, setDraggingNoteId]
+    [localUser, locks, notes, nextZIndex, setNextZIndex, setMode, setDraggingNoteId, showError]
   );
 
   const onDragNote = useCallback(
@@ -136,15 +159,24 @@ export function useNoteOperations({
       const lock = locks[id];
       if (lock && lock.userId !== localUser.userId) return;
 
-      await noteService.updateNote(id, { x: newCanvasX, y: newCanvasY });
+      const result = await noteService.updateNote(id, { x: newCanvasX, y: newCanvasY });
+      if (!result.success) {
+        // Don't show error for drag updates - too frequent, would spam user
+        // Just log it for debugging
+        console.error('Failed to update note position:', result.message);
+      }
     },
-    [localUser, locks]
+    [localUser, locks, showError]
   );
 
   const onEndDragNote = useCallback(
     async (id: string, isOverTrash: boolean) => {
       if (isOverTrash) {
-        await noteService.deleteNote(id);
+        const result = await noteService.deleteNote(id);
+        if (!result.success) {
+          showError(result.message, result.message.includes('locally') ? 'warning' : 'error');
+          // Still clear selection even if delete failed (optimistic UI)
+        }
         if (selectedNoteId === id) {
           setSelectedNoteId(null);
         }
@@ -153,7 +185,7 @@ export function useNoteOperations({
       setMode('idle');
       setDraggingNoteId(null);
     },
-    [selectedNoteId, setIsOverTrash, setMode, setDraggingNoteId]
+    [selectedNoteId, setIsOverTrash, setMode, setDraggingNoteId, showError]
   );
 
   return {

@@ -4,10 +4,13 @@ import { StickyBoard } from './components/StickyBoard';
 import { TrashBin } from './components/TrashBin';
 import { UsernameModal } from './components/UsernameModal';
 import { PresenceBar } from './components/PresenceBar';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { ErrorNotificationToast } from './components/ErrorNotificationToast';
 import { CanvasProvider, useCanvas } from './context/CanvasContext';
 import { AppModeProvider, useAppMode } from './context/AppModeContext';
 import { UserSessionProvider, useUserSession } from './context/UserSessionContext';
 import { UIStateProvider, useUIState } from './context/UIStateContext';
+import { ErrorNotificationProvider } from './context/ErrorNotificationContext';
 import { useNoteOperations } from './hooks/useNoteOperations';
 import { useCollaboration, useCollaborationHeartbeat, useCursorUpdates } from './hooks/useCollaboration';
 import { useBrowserZoomPrevention } from './hooks/useBrowserZoomPrevention';
@@ -97,6 +100,7 @@ function AppContent() {
 
   return (
     <div style={{ transform: 'none' }}>
+      <ErrorNotificationToast />
       <Toolbar
         activeColor={activeColor}
         onColorChange={setActiveColor}
@@ -137,13 +141,17 @@ function AppContent() {
 
 function App() {
   return (
-    <UserSessionProvider>
-      <CanvasProvider>
-        <UIStateProvider>
-          <AppModeProviderWrapper />
-        </UIStateProvider>
-      </CanvasProvider>
-    </UserSessionProvider>
+    <ErrorBoundary>
+      <ErrorNotificationProvider>
+        <UserSessionProvider>
+          <CanvasProvider>
+            <UIStateProvider>
+              <AppModeProviderWrapper />
+            </UIStateProvider>
+          </CanvasProvider>
+        </UserSessionProvider>
+      </ErrorNotificationProvider>
+    </ErrorBoundary>
   );
 }
 

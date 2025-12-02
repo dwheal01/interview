@@ -3,6 +3,7 @@ import { collection, query, onSnapshot } from 'firebase/firestore';
 import type { NoteDoc } from '../types';
 import { isFirebaseEnabled, getDb, WORKSPACE_ID } from '../config/firebase';
 import { LocalStorageAdapter } from '../services/storageAdapter';
+import { useErrorNotification } from '../context/ErrorNotificationContext';
 
 /**
  * Hook to subscribe to notes from Firestore
@@ -11,6 +12,7 @@ import { LocalStorageAdapter } from '../services/storageAdapter';
 export function useNotesSubscription() {
   const [notes, setNotes] = useState<NoteDoc[]>([]);
   const localStorageAdapterRef = useRef(new LocalStorageAdapter());
+  const { showError } = useErrorNotification();
 
   useEffect(() => {
     if (isFirebaseEnabled()) {
@@ -33,12 +35,14 @@ export function useNotesSubscription() {
         },
         (error) => {
           console.error('Firestore error:', error);
+          showError('Connection lost. Loading notes from local storage.', 'warning');
           // Fallback to localStorage on error
           localStorageAdapterRef.current
             .getNotes()
             .then((stored) => setNotes(stored))
             .catch((e) => {
               console.error('Failed to load from localStorage:', e);
+              showError('Failed to load notes from local storage.', 'error');
             });
         }
       );
@@ -51,18 +55,20 @@ export function useNotesSubscription() {
         .then((stored) => setNotes(stored))
         .catch((e) => {
           console.error('Failed to load from localStorage:', e);
+          showError('Failed to load notes from local storage.', 'error');
         });
     }
-  }, []);
+  }, [showError]);
 
   // Persist to localStorage whenever notes change (for localStorage mode)
   useEffect(() => {
     if (!isFirebaseEnabled() && notes.length >= 0) {
       localStorageAdapterRef.current.saveNotes(notes).catch((e) => {
         console.error('Failed to save to localStorage:', e);
+        showError('Failed to save notes to local storage.', 'error');
       });
     }
-  }, [notes]);
+  }, [notes, showError]);
 
   return notes;
 }
