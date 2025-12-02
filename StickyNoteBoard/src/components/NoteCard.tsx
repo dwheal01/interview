@@ -26,16 +26,18 @@ export function NoteCard({ note, isSelected, onMouseDown, onChange }: NoteCardPr
       onMouseDown={onMouseDown}
     >
       <input
-        className="w-full border-none bg-transparent font-semibold text-xs mb-1 outline-none"
+        className="w-full border-none bg-transparent font-semibold text-xs mb-1 outline-none placeholder-gray-400"
         value={note.title}
         onChange={(e) => onChange({ title: e.target.value })}
         onClick={(e) => e.stopPropagation()}
+        placeholder="Title"
       />
       <textarea
-        className="flex-1 w-full border-none bg-transparent text-xs resize-none outline-none"
+        className="flex-1 w-full border-none bg-transparent text-xs resize-none outline-none placeholder-gray-400"
         value={note.content}
         onChange={(e) => onChange({ content: e.target.value })}
         onClick={(e) => e.stopPropagation()}
+        placeholder="Note..."
       />
     </div>
   );
