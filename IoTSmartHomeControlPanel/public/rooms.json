@@ -1,0 +1,58 @@
+{
+  "rooms": [
+    {
+      "id": "living-room",
+      "name": "Living Room",
+      "devices": ["light", "fan", "speaker"]
+    },
+    {
+      "id": "bedroom",
+      "name": "Bedroom",
+      "devices": ["light", "fan"]
+    },
+    {
+      "id": "office",
+      "name": "Office",
+      "devices": ["light", "speaker"]
+    }
+  ],
+  "defaults": {
+    "light": {
+      "brightness": 100,
+      "isOn": false
+    },
+    "speaker": {
+      "volume": 50,
+      "isOn": false
+    },
+    "fan": {
+      "speed": 0
+    },
+    "thermostat": {
+      "temp": 72,
+      "unit": "F",
+      "isOn": true
+    },
+    "lock": {
+      "locked": true
+    }
+  },
+  "away": {
+    "light": {
+      "isOn": false
+    },
+    "speaker": {
+      "isOn": false
+    },
+    "fan": {
+      "speed": 0
+    },
+    "thermostat": {
+      "isOn": false
+    },
+    "lock": {
+      "locked": true
+    }
+  }
+}
+
