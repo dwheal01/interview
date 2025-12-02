@@ -1,3 +1,4 @@
+Chat GPT log: https://chatgpt.com/share/692f6a8f-cc48-8012-b873-0d9aa398f187
 # Sticky Notes Board
 
 A real-time collaborative infinite canvas for sticky notes built with React, TypeScript, Vite, and Firebase.
