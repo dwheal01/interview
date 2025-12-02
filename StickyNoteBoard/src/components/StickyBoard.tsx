@@ -82,7 +82,7 @@ export function StickyBoard({
     return { x: screenX, y: screenY };
   };
 
-  // Check if note overlaps with trash
+  // Check if note card overlaps with trash
   const checkTrashOverlap = (note: Note) => {
     const trashSize = 48;
     const trashRight = window.innerWidth - 16;
@@ -90,8 +90,10 @@ export function StickyBoard({
     const trashLeft = trashRight - trashSize;
     const trashTop = trashBottom - trashSize;
 
+    // Get note's screen position and size
     const screenPos = canvasToScreen(note.x, note.y);
     const noteSize = 176 * canvas.scale; // w-44 = 176px
+    
     const noteRect = {
       left: screenPos.x,
       top: screenPos.y,
@@ -99,11 +101,19 @@ export function StickyBoard({
       bottom: screenPos.y + noteSize,
     };
 
+    const trashRect = {
+      left: trashLeft,
+      top: trashTop,
+      right: trashRight,
+      bottom: trashBottom,
+    };
+
+    // Check if rectangles overlap
     const overlaps = !(
-      noteRect.right < trashLeft ||
-      noteRect.left > trashRight ||
-      noteRect.bottom < trashTop ||
-      noteRect.top > trashBottom
+      noteRect.right < trashRect.left ||
+      noteRect.left > trashRect.right ||
+      noteRect.bottom < trashRect.top ||
+      noteRect.top > trashRect.bottom
     );
 
     setIsOverTrash(overlaps);
@@ -177,7 +187,7 @@ export function StickyBoard({
 
         onDragNote(dragState.noteId, newX, newY);
 
-        // Check trash overlap
+        // Check if note card overlaps with trash
         const note = notes.find(n => n.id === dragState.noteId);
         if (note) {
           checkTrashOverlap({ ...note, x: newX, y: newY });
