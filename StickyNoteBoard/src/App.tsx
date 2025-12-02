@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import type { NoteColor, CanvasTransform, NoteDoc, LockDoc, LocalUser } from './types';
+import type { NoteColor, CanvasTransform, NoteDoc, LocalUser } from './types';
 import { Toolbar } from './components/Toolbar';
 import { StickyBoard } from './components/StickyBoard';
 import { TrashBin } from './components/TrashBin';
@@ -226,7 +226,7 @@ function App() {
     }
   };
 
-  const onBeginDragNote = async (id: string, startCanvasX: number, startCanvasY: number) => {
+  const onBeginDragNote = async (id: string, _startCanvasX: number, _startCanvasY: number) => {
     if (!localUser) return;
     const lock = locks[id];
     if (lock && lock.userId !== localUser.userId) return; // Can't drag if locked by someone else

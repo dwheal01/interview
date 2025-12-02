@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import type { NoteDoc, NoteColor, LockDoc } from '../types';
 
 type NoteCardProps = {
@@ -31,18 +30,13 @@ export function NoteCard({
   onStartEdit,
   onStopEdit 
 }: NoteCardProps) {
-  const [hasFocus, setHasFocus] = useState(false);
-  
-  const lockedByOther = lock && lock.userId !== localUserId;
-  const lockedByMe = lock && lock.userId === localUserId;
+  const lockedByOther = !!(lock && lock.userId !== localUserId);
 
   const handleFocus = () => {
-    setHasFocus(true);
     onStartEdit();
   };
 
   const handleBlur = () => {
-    setHasFocus(false);
     // Delay to allow focus to move between fields
     setTimeout(() => {
       if (!document.activeElement?.closest('.note-card-input')) {

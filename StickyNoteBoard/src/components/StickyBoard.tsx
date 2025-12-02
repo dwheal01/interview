@@ -37,7 +37,7 @@ export function StickyBoard({
   canvas,
   mode,
   ghostPosition,
-  draggingNoteId,
+  draggingNoteId: _draggingNoteId,
   activeColor,
   locks,
   localUserId,
@@ -98,7 +98,7 @@ export function StickyBoard({
   };
 
   // Check if note card overlaps with trash
-  const checkTrashOverlap = (note: Note) => {
+  const checkTrashOverlap = (note: NoteDoc) => {
     if (!boardRef.current) {
       setIsOverTrash(false);
       return;
@@ -249,7 +249,7 @@ export function StickyBoard({
     }
   };
 
-  const handleMouseUpCanvas = (e: React.MouseEvent) => {
+  const handleMouseUpCanvas = (_e: React.MouseEvent) => {
     if (panStart) {
       setPanStart(null);
     }
