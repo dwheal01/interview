@@ -372,7 +372,7 @@ function App() {
         localUser={localUser}
       />
       <TrashBin isActive={isOverTrash} />
-    </div>
+      </div>
   );
 }
 
