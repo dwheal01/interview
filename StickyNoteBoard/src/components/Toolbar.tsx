@@ -19,7 +19,10 @@ export function Toolbar({
   const colors = NOTE_COLORS;
 
   return (
-    <div className="fixed top-0 left-0 right-0 h-14 flex items-center px-4 gap-4 bg-white shadow z-50">
+    <div 
+      className="fixed top-0 left-0 right-0 h-14 flex items-center px-4 gap-4 bg-white shadow z-50"
+      style={{ transform: 'none', willChange: 'auto' }}
+    >
       <div className="text-sm font-semibold">Sticky Canvas</div>
       
       <div className="flex gap-2">
