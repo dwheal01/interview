@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { collection, query, onSnapshot } from 'firebase/firestore';
 import type { LockDoc } from '../types';
 import { isFirebaseEnabled, getDb, WORKSPACE_ID } from '../config/firebase';
+import { validateLockDoc } from '../utils/validation';
 
 /**
  * Hook to subscribe to locks from Firestore
@@ -19,8 +20,10 @@ export function useLocksSubscription() {
       const unsub = onSnapshot(q, (snapshot) => {
         const locksMap: Record<string, LockDoc> = {};
         snapshot.forEach((docSnap) => {
-          const lock = docSnap.data() as LockDoc;
-          locksMap[lock.noteId] = lock;
+          const validated = validateLockDoc(docSnap.data());
+          if (validated) {
+            locksMap[validated.noteId] = validated;
+          }
         });
         setLocks(locksMap);
       });

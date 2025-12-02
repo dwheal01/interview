@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { collection, query, onSnapshot } from 'firebase/firestore';
 import type { PresenceDoc } from '../types';
 import { isFirebaseEnabled, getDb, WORKSPACE_ID } from '../config/firebase';
+import { validatePresenceDoc } from '../utils/validation';
 
 /**
  * Hook to subscribe to presence from Firestore
@@ -19,7 +20,10 @@ export function usePresenceSubscription() {
       const unsub = onSnapshot(q, (snapshot) => {
         const presenceList: PresenceDoc[] = [];
         snapshot.forEach((docSnap) => {
-          presenceList.push(docSnap.data() as PresenceDoc);
+          const validated = validatePresenceDoc(docSnap.data());
+          if (validated) {
+            presenceList.push(validated);
+          }
         });
         setPresence(presenceList);
       });

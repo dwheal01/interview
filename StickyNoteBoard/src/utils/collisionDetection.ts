@@ -1,6 +1,7 @@
 import type { NoteDoc, CanvasTransform } from '../types';
 import { NOTE_WIDTH, TRASH_SIZE, TRASH_MARGIN } from '../constants';
 import { canvasToScreen } from './canvasUtils';
+import { queryElementSafe } from './validation';
 
 /**
  * Checks if a note overlaps with the trash bin
@@ -25,7 +26,7 @@ export function checkTrashOverlap(
   
   // Get actual note height (may be larger than NOTE_HEIGHT if content expanded)
   let noteHeight = NOTE_WIDTH; // Default height
-  const noteElement = document.querySelector(`[data-note-id="${note.id}"]`) as HTMLElement;
+  const noteElement = queryElementSafe(`[data-note-id="${note.id}"]`);
   if (noteElement) {
     const elementRect = noteElement.getBoundingClientRect();
     noteHeight = elementRect.height;

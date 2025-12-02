@@ -4,6 +4,7 @@ import type { NoteDoc } from '../types';
 import { isFirebaseEnabled, getDb, WORKSPACE_ID } from '../config/firebase';
 import { LocalStorageAdapter } from '../services/storageAdapter';
 import { useErrorNotification } from '../context/ErrorNotificationContext';
+import { validateNoteDoc, validateNoteDocArray } from '../utils/validation';
 
 /**
  * Hook to subscribe to notes from Firestore
@@ -25,7 +26,10 @@ export function useNotesSubscription() {
         (snapshot) => {
           const notesList: NoteDoc[] = [];
           snapshot.forEach((docSnap) => {
-            notesList.push(docSnap.data() as NoteDoc);
+            const validated = validateNoteDoc(docSnap.data());
+            if (validated) {
+              notesList.push(validated);
+            }
           });
           setNotes(notesList);
           // Also persist to localStorage as backup
@@ -39,7 +43,10 @@ export function useNotesSubscription() {
           // Fallback to localStorage on error
           localStorageAdapterRef.current
             .getNotes()
-            .then((stored) => setNotes(stored))
+            .then((stored) => {
+              const validated = validateNoteDocArray(stored);
+              setNotes(validated);
+            })
             .catch((e) => {
               console.error('Failed to load from localStorage:', e);
               showError('Failed to load notes from local storage.', 'error');
@@ -52,7 +59,10 @@ export function useNotesSubscription() {
       // Fallback to localStorage
       localStorageAdapterRef.current
         .getNotes()
-        .then((stored) => setNotes(stored))
+        .then((stored) => {
+          const validated = validateNoteDocArray(stored);
+          setNotes(validated);
+        })
         .catch((e) => {
           console.error('Failed to load from localStorage:', e);
           showError('Failed to load notes from local storage.', 'error');

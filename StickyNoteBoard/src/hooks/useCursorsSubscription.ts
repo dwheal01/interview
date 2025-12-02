@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { collection, query, onSnapshot } from 'firebase/firestore';
 import type { CursorDoc } from '../types';
 import { isFirebaseEnabled, getDb, WORKSPACE_ID } from '../config/firebase';
+import { validateCursorDoc } from '../utils/validation';
 
 /**
  * Hook to subscribe to cursors from Firestore
@@ -20,10 +21,10 @@ export function useCursorsSubscription(localUserId: string) {
       const unsub = onSnapshot(q, (snapshot) => {
         const cursorsList: CursorDoc[] = [];
         snapshot.forEach((docSnap) => {
-          const cursor = docSnap.data() as CursorDoc;
-          // Filter out local user's cursor
-          if (cursor.userId !== localUserId) {
-            cursorsList.push(cursor);
+          const validated = validateCursorDoc(docSnap.data());
+          // Filter out local user's cursor and invalid cursors
+          if (validated && validated.userId !== localUserId) {
+            cursorsList.push(validated);
           }
         });
         setCursors(cursorsList);

@@ -1,4 +1,5 @@
 import type { NoteDoc } from '../types';
+import { validateNoteDocArray } from '../utils/validation';
 
 const NOTES_STORAGE_KEY = "sticky-board-notes";
 
@@ -21,7 +22,12 @@ export class LocalStorageAdapter implements StorageAdapter {
   async getNotes(): Promise<NoteDoc[]> {
     try {
       const stored = localStorage.getItem(NOTES_STORAGE_KEY);
-      return stored ? JSON.parse(stored) : [];
+      if (!stored) {
+        return [];
+      }
+      const parsed = JSON.parse(stored);
+      // Validate and filter invalid notes
+      return validateNoteDocArray(parsed);
     } catch (error) {
       console.error('Failed to load notes from localStorage:', error);
       return [];
