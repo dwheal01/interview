@@ -213,18 +213,23 @@ function App() {
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight - 56; // minus toolbar height
 
-    const scaleX = viewportWidth / contentWidth;
-    const scaleY = viewportHeight / contentHeight;
+    const scaleX = (viewportWidth - padding * 2) / contentWidth;
+    const scaleY = (viewportHeight - padding * 2) / contentHeight;
     const newScale = Math.min(scaleX, scaleY, 2.0);
 
+    // Center of content in canvas coordinates
     const centerCanvasX = (minX + maxX) / 2;
     const centerCanvasY = (minY + maxY) / 2;
 
-    const centerScreenX = viewportWidth / 2;
-    const centerScreenY = viewportHeight / 2;
-
-    const newOffsetX = centerScreenX - centerCanvasX * newScale;
-    const newOffsetY = centerScreenY - centerCanvasY * newScale;
+    // Since the transform div is at center (50%, 50%) with transformOrigin center,
+    // we need to translate so that centerCanvasX, centerCanvasY appears at viewport center
+    // The div center is at (viewportWidth/2, viewportHeight/2) in screen coords
+    // After transform: screenX = viewportWidth/2 + offsetX + canvasX * scale
+    // We want centerCanvasX to map to viewportWidth/2:
+    // viewportWidth/2 = viewportWidth/2 + offsetX + centerCanvasX * scale
+    // So: offsetX = -centerCanvasX * scale
+    const newOffsetX = -centerCanvasX * newScale;
+    const newOffsetY = -centerCanvasY * newScale;
 
     setCanvas({ scale: newScale, offsetX: newOffsetX, offsetY: newOffsetY });
   };
