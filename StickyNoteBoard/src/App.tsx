@@ -1,336 +1,95 @@
-import { useState, useEffect, useRef } from 'react';
-import type { NoteColor, CanvasTransform, NoteDoc, LocalUser } from './types';
+import { useState, useCallback, useMemo } from 'react';
+import type { NoteColor } from './types';
 import { Toolbar } from './components/Toolbar';
 import { StickyBoard } from './components/StickyBoard';
 import { TrashBin } from './components/TrashBin';
 import { UsernameModal } from './components/UsernameModal';
 import { PresenceBar } from './components/PresenceBar';
-import { getLocalUser, createLocalUser } from './utils/userSession';
-import { 
-  useNotes, 
-  useLocks, 
-  usePresence, 
-  useCursors,
-  usePresenceHeartbeat,
-  createNote,
-  updateNote,
-  deleteNote,
-  acquireLock,
-  releaseLock,
-  updateCursor
-} from './hooks/useFirestore';
+import { CanvasProvider, useCanvas } from './context/CanvasContext';
+import { AppModeProvider, useAppMode } from './context/AppModeContext';
+import { UserSessionProvider, useUserSession } from './context/UserSessionContext';
+import { useNoteOperations } from './hooks/useNoteOperations';
+import { useCollaboration, useCollaborationHeartbeat, useCursorUpdates } from './hooks/useCollaboration';
+import { useBrowserZoomPrevention } from './hooks/useBrowserZoomPrevention';
 
-type AppMode = "idle" | "adding" | "dragging" | "panning";
+function AppContent() {
+  // User session
+  const { localUser, showUsernameModal, handleJoin } = useUserSession();
 
-const STORAGE_KEY = "sticky-board-canvas";
+  // Canvas state
+  const { canvas, onPan, onZoom, onResetViewFit, nextZIndex, setNextZIndex } = useCanvas();
 
-function App() {
-  // Local user session
-  const [localUser, setLocalUser] = useState<LocalUser | null>(null);
-  const [showUsernameModal, setShowUsernameModal] = useState(false);
+  // App mode state
+  const {
+    mode,
+    setMode,
+    ghostPosition,
+    draggingNoteId,
+    setDraggingNoteId,
+    isOverTrash,
+    setIsOverTrash,
+    enterAddMode,
+    exitAddMode,
+  } = useAppMode();
 
-  // Firestore subscriptions
-  const notes = useNotes();
-  const locks = useLocks();
-  const presence = usePresence();
-  const cursors = useCursors(localUser?.userId || '');
-  usePresenceHeartbeat(localUser);
+  // Collaboration (Firestore subscriptions)
+  const { notes, locks, presence, cursors } = useCollaboration(localUser?.userId || '');
+  useCollaborationHeartbeat(localUser);
+  const { handleCursorMove } = useCursorUpdates(localUser);
 
   // UI state
-  const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
-  const [activeColor, setActiveColor] = useState<NoteColor>("yellow");
-  const [canvas, setCanvas] = useState<CanvasTransform>({ scale: 1, offsetX: 0, offsetY: 0 });
-  const [mode, setMode] = useState<AppMode>("idle");
-  const [ghostPosition, setGhostPosition] = useState<{ x: number; y: number } | null>(null);
-  const [draggingNoteId, setDraggingNoteId] = useState<string | null>(null);
-  const [isOverTrash, setIsOverTrash] = useState(false);
-  const [nextZIndex, setNextZIndex] = useState(1);
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [activeColor, setActiveColor] = useState<NoteColor>('yellow');
 
-  // Initialize local user
-  useEffect(() => {
-    const user = getLocalUser();
-    if (user) {
-      setLocalUser(user);
-    } else {
-      setShowUsernameModal(true);
-    }
-    setIsLoaded(true);
-  }, []);
-
-  // Load canvas from localStorage
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const persisted = JSON.parse(raw);
-        setCanvas(persisted.canvas || { scale: 1, offsetX: 0, offsetY: 0 });
-        setNextZIndex(persisted.nextZIndex || 1);
-      }
-    } catch (e) {
-      console.error('Failed to load canvas from localStorage:', e);
-    }
-  }, []);
-
-  // Persist canvas to localStorage
-  useEffect(() => {
-    if (!isLoaded) return;
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ canvas, nextZIndex }));
-    } catch (e) {
-      console.error('Failed to save canvas to localStorage:', e);
-    }
-  }, [canvas, nextZIndex, isLoaded]);
+  // Note operations (encapsulates all note CRUD and lock management)
+  const noteOperations = useNoteOperations({
+    localUser,
+    locks,
+    notes,
+    activeColor,
+    nextZIndex,
+    setNextZIndex,
+    setMode,
+    setDraggingNoteId,
+    setIsOverTrash,
+    exitAddMode,
+  });
 
   // Prevent browser zoom shortcuts
-  useEffect(() => {
-    const handleWheel = (e: WheelEvent) => {
-      if (e.ctrlKey || e.metaKey) {
-        e.preventDefault();
+  useBrowserZoomPrevention();
+
+  // Event handlers
+  const handleCanvasClick = useCallback(
+    (canvasX: number, canvasY: number) => {
+      if (mode === 'adding') {
+        noteOperations.onPlaceNote(canvasX, canvasY);
       }
-    };
+    },
+    [mode, noteOperations]
+  );
 
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && (e.key === '=' || e.key === '-' || e.key === '0' || e.key === '+' || e.key === '_')) {
-        e.preventDefault();
+  const handleResetView = useCallback(() => {
+    onResetViewFit(notes);
+  }, [notes, onResetViewFit]);
+
+  const handleSelectNote = useCallback(
+    (id: string | null) => {
+      noteOperations.onSelectNote(id);
+      if (mode === 'adding') {
+        exitAddMode();
       }
-    };
+    },
+    [mode, exitAddMode, noteOperations]
+  );
 
-    window.addEventListener('wheel', handleWheel, { passive: false });
-    window.addEventListener('keydown', handleKeyDown);
+  const handleEndDragNote = useCallback(
+    async (id: string) => {
+      await noteOperations.onEndDragNote(id, isOverTrash);
+    },
+    [isOverTrash, noteOperations]
+  );
 
-    return () => {
-      window.removeEventListener('wheel', handleWheel);
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, []);
-
-  // Use ref to track if we're in add mode to prevent race conditions
-  const isAddingModeRef = useRef(false);
-
-  // Update ghost position on mouse move in add mode
-  useEffect(() => {
-    const isAdding = mode === "adding";
-    isAddingModeRef.current = isAdding;
-    
-    if (!isAdding) {
-      // Immediately clear ghost position when not in add mode
-      setGhostPosition(null);
-      return;
-    }
-
-    const handleMouseMove = (e: MouseEvent) => {
-      // Double-check ref to ensure we're still in add mode (handles race conditions)
-      if (!isAddingModeRef.current) {
-        setGhostPosition(null);
-        return;
-      }
-      
-      const viewportWidth = window.innerWidth;
-      const viewportHeight = window.innerHeight - 56;
-      const centerX = viewportWidth / 2;
-      const centerY = viewportHeight / 2;
-      
-      const screenX = e.clientX;
-      const screenY = e.clientY - 56;
-      
-      const canvasX = (screenX - centerX - canvas.offsetX) / canvas.scale;
-      const canvasY = (screenY - centerY - canvas.offsetY) / canvas.scale;
-      
-      // Only set if still in add mode
-      if (isAddingModeRef.current) {
-        setGhostPosition({ x: canvasX, y: canvasY });
-      }
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      // Clear ghost position when listener is removed
-      setGhostPosition(null);
-      isAddingModeRef.current = false;
-    };
-  }, [mode, canvas]);
-
-  const handleJoin = (username: string) => {
-    const user = createLocalUser(username);
-    setLocalUser(user);
-    setShowUsernameModal(false);
-  };
-
-  const onAddNoteMode = () => {
-    setMode("adding");
-    setGhostPosition(null);
-    isAddingModeRef.current = true;
-  };
-
-  const onPlaceNote = async (canvasX: number, canvasY: number) => {
-    if (!localUser) return;
-    
-    // Exit add mode IMMEDIATELY before any async operations
-    isAddingModeRef.current = false;
-    setMode("idle");
-    setGhostPosition(null);
-    
-    const id = crypto.randomUUID?.() ?? String(Date.now());
-    const newNote: NoteDoc = {
-      id,
-      title: "",
-      content: "",
-      x: canvasX,
-      y: canvasY,
-      color: activeColor,
-      zIndex: nextZIndex,
-      updatedAt: Date.now(),
-    };
-    
-    await createNote(newNote);
-    setNextZIndex(prev => prev + 1);
-    setSelectedNoteId(id);
-  };
-
-  const onUpdateNote = async (noteId: string, fields: Partial<NoteDoc>) => {
-    if (!localUser) return;
-    const lock = locks[noteId];
-    if (lock && lock.userId !== localUser.userId) return; // Can't edit if locked by someone else
-    
-    await updateNote(noteId, fields);
-  };
-
-  const onSelectNote = (id: string | null) => {
-    setSelectedNoteId(id);
-    // Exit add mode if selecting a note
-    if (mode === "adding") {
-      isAddingModeRef.current = false; // Update ref immediately
-      setMode("idle");
-      setGhostPosition(null);
-    }
-  };
-
-  const onStartEdit = async (noteId: string) => {
-    if (!localUser) return;
-    const lock = locks[noteId];
-    if (lock && lock.userId !== localUser.userId) {
-      // Can't edit - locked by someone else
-      return;
-    }
-    setEditingNoteId(noteId);
-    await acquireLock(noteId, localUser);
-  };
-
-  const onStopEdit = async (noteId: string) => {
-    if (editingNoteId === noteId) {
-      setEditingNoteId(null);
-      await releaseLock(noteId);
-    }
-  };
-
-  const onBeginDragNote = async (id: string, _startCanvasX: number, _startCanvasY: number) => {
-    if (!localUser) return;
-    const lock = locks[id];
-    if (lock && lock.userId !== localUser.userId) return; // Can't drag if locked by someone else
-    
-    setMode("dragging");
-    setDraggingNoteId(id);
-    setGhostPosition(null); // Clear ghost when starting to drag
-    
-    // Increase z-index
-    const note = notes.find(n => n.id === id);
-    if (note) {
-      await updateNote(id, { zIndex: nextZIndex });
-      setNextZIndex(prev => prev + 1);
-    }
-  };
-
-  const onDragNote = async (id: string, newCanvasX: number, newCanvasY: number) => {
-    if (!localUser) return;
-    const lock = locks[id];
-    if (lock && lock.userId !== localUser.userId) return; // Can't drag if locked by someone else
-    
-    await updateNote(id, { x: newCanvasX, y: newCanvasY });
-  };
-
-  const onEndDragNote = async (id: string) => {
-    if (isOverTrash) {
-      await deleteNote(id);
-      if (selectedNoteId === id) {
-        setSelectedNoteId(null);
-      }
-    }
-    setIsOverTrash(false);
-    setMode("idle");
-    setDraggingNoteId(null);
-  };
-
-  const onPan = (deltaX: number, deltaY: number) => {
-    setCanvas(prev => ({
-      ...prev,
-      offsetX: prev.offsetX + deltaX,
-      offsetY: prev.offsetY + deltaY,
-    }));
-  };
-
-  const onZoom = (scaleFactor: number, screenX: number, screenY: number) => {
-    setCanvas(prev => {
-      const viewportWidth = window.innerWidth;
-      const viewportHeight = window.innerHeight - 56;
-      const centerX = viewportWidth / 2;
-      const centerY = viewportHeight / 2;
-      
-      const prevScale = prev.scale;
-      const worldX = (screenX - centerX - prev.offsetX) / prevScale;
-      const worldY = (screenY - centerY - prev.offsetY) / prevScale;
-      
-      let newScale = prevScale * scaleFactor;
-      newScale = Math.min(2.0, Math.max(0.3, newScale));
-      
-      const newOffsetX = screenX - centerX - worldX * newScale;
-      const newOffsetY = screenY - centerY - worldY * newScale;
-      
-      return { scale: newScale, offsetX: newOffsetX, offsetY: newOffsetY };
-    });
-  };
-
-  const onResetViewFit = () => {
-    if (notes.length === 0) {
-      setCanvas({ scale: 1, offsetX: 0, offsetY: 0 });
-      return;
-    }
-
-    const minX = Math.min(...notes.map(n => n.x));
-    const maxX = Math.max(...notes.map(n => n.x + 176));
-    const minY = Math.min(...notes.map(n => n.y));
-    const maxY = Math.max(...notes.map(n => n.y + 176));
-
-    const padding = 40;
-    const contentWidth = maxX - minX + padding * 2;
-    const contentHeight = maxY - minY + padding * 2;
-
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight - 56;
-
-    const scaleX = (viewportWidth - padding * 2) / contentWidth;
-    const scaleY = (viewportHeight - padding * 2) / contentHeight;
-    const newScale = Math.min(scaleX, scaleY, 2.0);
-
-    const centerCanvasX = (minX + maxX) / 2;
-    const centerCanvasY = (minY + maxY) / 2;
-
-    const newOffsetX = -centerCanvasX * newScale;
-    const newOffsetY = -centerCanvasY * newScale;
-
-    setCanvas({ scale: newScale, offsetX: newOffsetX, offsetY: newOffsetY });
-  };
-
-  const handleCanvasClick = (canvasX: number, canvasY: number) => {
-    if (mode === "adding") {
-      onPlaceNote(canvasX, canvasY);
-    } else {
-      // Clear ghost position if clicking outside add mode
-      setGhostPosition(null);
-    }
-  };
+  // Memoized zoom percent
+  const zoomPercent = useMemo(() => Math.round(canvas.scale * 100), [canvas.scale]);
 
   if (!localUser || showUsernameModal) {
     return <UsernameModal onJoin={handleJoin} />;
@@ -341,14 +100,14 @@ function App() {
       <Toolbar
         activeColor={activeColor}
         onColorChange={setActiveColor}
-        zoomPercent={Math.round(canvas.scale * 100)}
-        onResetView={onResetViewFit}
-        onEnterAddMode={onAddNoteMode}
+        zoomPercent={zoomPercent}
+        onResetView={handleResetView}
+        onEnterAddMode={enterAddMode}
       />
       <PresenceBar users={presence} localUserId={localUser.userId} />
       <StickyBoard
         notes={notes}
-        selectedNoteId={selectedNoteId}
+        selectedNoteId={noteOperations.selectedNoteId}
         canvas={canvas}
         mode={mode}
         ghostPosition={ghostPosition}
@@ -358,21 +117,40 @@ function App() {
         localUserId={localUser.userId}
         cursors={cursors}
         onCanvasClick={handleCanvasClick}
-        onSelectNote={onSelectNote}
-        onBeginDragNote={onBeginDragNote}
-        onDragNote={onDragNote}
-        onEndDragNote={onEndDragNote}
+        onSelectNote={handleSelectNote}
+        onBeginDragNote={noteOperations.onBeginDragNote}
+        onDragNote={noteOperations.onDragNote}
+        onEndDragNote={handleEndDragNote}
         onPan={onPan}
         onZoom={onZoom}
-        onUpdateNote={onUpdateNote}
-        onStartEdit={onStartEdit}
-        onStopEdit={onStopEdit}
+        onUpdateNote={noteOperations.onUpdateNote}
+        onStartEdit={noteOperations.onStartEdit}
+        onStopEdit={noteOperations.onStopEdit}
         setIsOverTrash={setIsOverTrash}
-        onCursorMove={updateCursor}
+        onCursorMove={handleCursorMove}
         localUser={localUser}
       />
       <TrashBin isActive={isOverTrash} />
-      </div>
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <UserSessionProvider>
+      <CanvasProvider>
+        <AppModeProviderWrapper />
+      </CanvasProvider>
+    </UserSessionProvider>
+  );
+}
+
+function AppModeProviderWrapper() {
+  const { canvas } = useCanvas();
+  return (
+    <AppModeProvider canvas={canvas}>
+      <AppContent />
+    </AppModeProvider>
   );
 }
 
