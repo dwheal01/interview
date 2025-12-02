@@ -24,3 +24,46 @@ export type PersistedState = {
   nextZIndex: number;
 };
 
+// Firestore document types
+export type NoteDoc = {
+  id: string;
+  title: string;
+  content: string;
+  x: number;
+  y: number;
+  color: NoteColor;
+  zIndex: number;
+  updatedAt: number; // Unix ms timestamp
+};
+
+export type LockDoc = {
+  noteId: string;
+  userId: string;
+  username: string;
+  userColor: string;
+  lockedAt: number; // Unix ms timestamp
+};
+
+export type PresenceDoc = {
+  userId: string;
+  username: string;
+  color: string;
+  lastSeen: number; // Unix ms timestamp
+};
+
+export type CursorDoc = {
+  userId: string;
+  username: string;
+  color: string;
+  canvasX: number;
+  canvasY: number;
+  lastMovedAt: number; // Unix ms timestamp
+};
+
+// Local user session
+export type LocalUser = {
+  userId: string;
+  username: string;
+  color: string;
+};
+

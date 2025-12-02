@@ -1,17 +1,21 @@
 import { useRef, useState, useEffect } from 'react';
-import type { Note, CanvasTransform } from '../types';
+import type { NoteDoc, CanvasTransform, LockDoc, CursorDoc, LocalUser } from '../types';
 import { NoteCard } from './NoteCard';
+import { RemoteCursorsLayer } from './RemoteCursorsLayer';
 
 type AppMode = "idle" | "adding" | "dragging" | "panning";
 
 type StickyBoardProps = {
-  notes: Note[];
+  notes: NoteDoc[];
   selectedNoteId: string | null;
   canvas: CanvasTransform;
   mode: AppMode;
   ghostPosition: { x: number; y: number } | null;
   draggingNoteId: string | null;
   activeColor: string;
+  locks: Record<string, LockDoc>;
+  localUserId: string;
+  cursors: CursorDoc[];
   onCanvasClick: (canvasX: number, canvasY: number) => void;
   onSelectNote: (id: string | null) => void;
   onBeginDragNote: (id: string, startCanvasX: number, startCanvasY: number) => void;
@@ -19,8 +23,12 @@ type StickyBoardProps = {
   onEndDragNote: (id: string) => void;
   onPan: (deltaX: number, deltaY: number) => void;
   onZoom: (scaleFactor: number, screenX: number, screenY: number) => void;
-  onUpdateNote: (id: string, fields: Partial<Note>) => void;
+  onUpdateNote: (id: string, fields: Partial<NoteDoc>) => void;
+  onStartEdit: (id: string) => void;
+  onStopEdit: (id: string) => void;
   setIsOverTrash: (value: boolean) => void;
+  onCursorMove: (canvasX: number, canvasY: number, localUser: LocalUser) => void;
+  localUser: LocalUser;
 };
 
 export function StickyBoard({
@@ -31,6 +39,9 @@ export function StickyBoard({
   ghostPosition,
   draggingNoteId,
   activeColor,
+  locks,
+  localUserId,
+  cursors,
   onCanvasClick,
   onSelectNote,
   onBeginDragNote,
@@ -39,7 +50,11 @@ export function StickyBoard({
   onPan,
   onZoom,
   onUpdateNote,
+  onStartEdit,
+  onStopEdit,
   setIsOverTrash,
+  onCursorMove,
+  localUser,
 }: StickyBoardProps) {
   const boardRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -176,6 +191,20 @@ export function StickyBoard({
   };
 
   const handleMouseMoveCanvas = (e: React.MouseEvent) => {
+    // Update cursor position
+    if (boardRef.current) {
+      const rect = boardRef.current.getBoundingClientRect();
+      const screenX = e.clientX - rect.left;
+      const screenY = e.clientY - rect.top;
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+      
+      const canvasX = (screenX - centerX - canvas.offsetX) / canvas.scale;
+      const canvasY = (screenY - centerY - canvas.offsetY) / canvas.scale;
+      
+      onCursorMove(canvasX, canvasY, localUser);
+    }
+
     if (panStart) {
       // Panning
       const deltaX = e.clientX - panStart.x;
@@ -235,6 +264,13 @@ export function StickyBoard({
 
   const handleNoteMouseDown = (e: React.MouseEvent, noteId: string) => {
     if (e.button === 0) {
+      // Check if note is locked by someone else
+      const lock = locks[noteId];
+      if (lock && lock.userId !== localUserId) {
+        // Can't drag if locked by someone else
+        return;
+      }
+
       // Left mouse button - select the note first
       onSelectNote(noteId);
       
@@ -295,10 +331,16 @@ export function StickyBoard({
               key={note.id}
               note={note}
               isSelected={selectedNoteId === note.id}
+              lock={locks[note.id] || null}
+              localUserId={localUserId}
               onMouseDown={(e) => handleNoteMouseDown(e, note.id)}
               onChange={(fields) => onUpdateNote(note.id, fields)}
+              onStartEdit={() => onStartEdit(note.id)}
+              onStopEdit={() => onStopEdit(note.id)}
             />
           ))}
+          
+          <RemoteCursorsLayer cursors={cursors} canvas={canvas} />
           
           {mode === "adding" && ghostPosition && (
             <div
