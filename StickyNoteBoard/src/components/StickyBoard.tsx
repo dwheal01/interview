@@ -126,16 +126,33 @@ export function StickyBoard({
     setIsOverTrash(overlaps);
   };
 
-  const handleWheel = (event: React.WheelEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-    if (!boardRef.current) return;
-    const rect = boardRef.current.getBoundingClientRect();
-    const screenX = event.clientX - rect.left;
-    const screenY = event.clientY - rect.top;
-    const zoomFactor = event.deltaY < 0 ? 1.1 : 0.9;
-    onZoom(zoomFactor, screenX, screenY);
-  };
+  // Store onZoom in a ref to avoid re-adding listener
+  const onZoomRef = useRef(onZoom);
+  useEffect(() => {
+    onZoomRef.current = onZoom;
+  }, [onZoom]);
+
+  // Handle wheel events with non-passive listener to allow preventDefault
+  useEffect(() => {
+    const handleWheel = (event: WheelEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (!boardRef.current) return;
+      const rect = boardRef.current.getBoundingClientRect();
+      const screenX = event.clientX - rect.left;
+      const screenY = event.clientY - rect.top;
+      const zoomFactor = event.deltaY < 0 ? 1.1 : 0.9;
+      onZoomRef.current(zoomFactor, screenX, screenY);
+    };
+
+    const element = boardRef.current;
+    if (element) {
+      element.addEventListener('wheel', handleWheel, { passive: false });
+      return () => {
+        element.removeEventListener('wheel', handleWheel);
+      };
+    }
+  }, []);
 
   const handleMouseDownCanvas = (e: React.MouseEvent) => {
     // Don't handle if clicking on a note
@@ -252,7 +269,6 @@ export function StickyBoard({
     <div
       ref={boardRef}
       className="fixed inset-0 top-14 bg-slate-50 overflow-hidden"
-      onWheel={handleWheel}
       onContextMenu={(e) => e.preventDefault()}
     >
       <div
