@@ -132,7 +132,6 @@ function AppContent() {
         onStopEdit={noteOperations.onStopEdit}
         setIsOverTrash={setIsOverTrash}
         onCursorMove={handleCursorMove}
-        localUser={localUser}
       />
       <TrashBin isActive={isOverTrash} />
     </div>

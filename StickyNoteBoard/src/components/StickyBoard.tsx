@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from 'react';
-import type { NoteDoc, CanvasTransform, LockDoc, CursorDoc, LocalUser } from '../types';
+import type { NoteDoc, CanvasTransform, LockDoc, CursorDoc } from '../types';
 import { NoteCard } from './NoteCard';
 import { RemoteCursorsLayer } from './RemoteCursorsLayer';
 
@@ -27,8 +27,7 @@ type StickyBoardProps = {
   onStartEdit: (id: string) => void;
   onStopEdit: (id: string) => void;
   setIsOverTrash: (value: boolean) => void;
-  onCursorMove: (canvasX: number, canvasY: number, localUser: LocalUser) => void;
-  localUser: LocalUser;
+  onCursorMove: (canvasX: number, canvasY: number) => void;
 };
 
 export function StickyBoard({
@@ -54,7 +53,6 @@ export function StickyBoard({
   onStopEdit,
   setIsOverTrash,
   onCursorMove,
-  localUser,
 }: StickyBoardProps) {
   const boardRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -211,7 +209,7 @@ export function StickyBoard({
       const canvasX = (screenX - centerX - canvas.offsetX) / canvas.scale;
       const canvasY = (screenY - centerY - canvas.offsetY) / canvas.scale;
       
-      onCursorMove(canvasX, canvasY, localUser);
+      onCursorMove(canvasX, canvasY);
     }
 
     if (panStart) {
