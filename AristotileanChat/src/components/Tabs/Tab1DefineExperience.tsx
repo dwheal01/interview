@@ -28,11 +28,22 @@ export function Tab1DefineExperience() {
       return
     }
 
+    // Validate that we have conversation history before forcing summary
+    if (forceSummary && tab1History.length === 0) {
+      alert('Please have a conversation first before requesting a summary')
+      return
+    }
+
     const signal = createAbortSignal()
     setIsLoading(true)
-    const newUserMessage = createChatMessage('user', userMessage)
-    const updatedHistory = [...tab1History, newUserMessage]
-    setTab1History(updatedHistory)
+    
+    // Only add user message to history if it's not empty (i.e., not a force summary)
+    let updatedHistory = tab1History
+    if (userMessage.trim() && !forceSummary) {
+      const newUserMessage = createChatMessage('user', userMessage)
+      updatedHistory = [...tab1History, newUserMessage]
+      setTab1History(updatedHistory)
+    }
 
     try {
       const response = await fetch('/api/chat', {
@@ -62,26 +73,49 @@ export function Tab1DefineExperience() {
       
       const { parsed, cleanText } = parseModelOutput(rawText)
       
-      // Use cleanText if it has content, otherwise fall back to rawText
-      const messageContent = (cleanText && cleanText.trim()) || rawText.trim()
-      
-      console.log('Message content:', { rawText, cleanText, messageContent, parsed })
-      
-      if (!messageContent) {
-        console.error('Message content is empty after parsing:', { rawText, cleanText, parsed })
-        throw new Error('Message content is empty')
-      }
-
-      const assistantMessage = createChatMessage('assistant', messageContent)
-      console.log('Created assistant message:', assistantMessage)
-
-      setTab1History([...updatedHistory, assistantMessage])
-
-      // Check for summary
+      // Check for summary first
       const summary = extractSummary(parsed)
-      if (summary) {
-        setTab1Summary(summary)
-        setIsFinishedTab1(true)
+      
+      if (forceSummary) {
+        // When forcing summary, validate that we got a summary
+        if (!summary) {
+          console.error('Expected summary but none found in response:', { rawText, parsed })
+          // Try to extract any meaningful content as a fallback summary
+          const fallbackSummary = (cleanText && cleanText.trim()) || rawText.trim()
+          if (fallbackSummary && fallbackSummary.length > 20) {
+            // Use the response as summary if it's substantial
+            setTab1Summary(fallbackSummary)
+            setIsFinishedTab1(true)
+          } else {
+            throw new Error('Unable to generate summary. Please continue the conversation and try again.')
+          }
+        } else {
+          // When forcing summary, just set the summary without adding to chat history
+          setTab1Summary(summary)
+          setIsFinishedTab1(true)
+        }
+      } else {
+        // Normal message flow - add to chat history
+        // Use cleanText if it has content, otherwise fall back to rawText
+        const messageContent = (cleanText && cleanText.trim()) || rawText.trim()
+        
+        console.log('Message content:', { rawText, cleanText, messageContent, parsed })
+        
+        if (!messageContent) {
+          console.error('Message content is empty after parsing:', { rawText, cleanText, parsed })
+          throw new Error('Message content is empty')
+        }
+
+        const assistantMessage = createChatMessage('assistant', messageContent)
+        console.log('Created assistant message:', assistantMessage)
+
+        setTab1History([...updatedHistory, assistantMessage])
+
+        // Check if this message also contains a summary (natural completion)
+        if (summary) {
+          setTab1Summary(summary)
+          setIsFinishedTab1(true)
+        }
       }
     } catch (error) {
       // Don't show error for aborted requests

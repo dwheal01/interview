@@ -215,15 +215,17 @@ When you're ready to provide a summary, first acknowledge their sharing, then ou
 {"type":"summary","complete":true,"content":"...summary text..."}
 \`\`\`
 
+CRITICAL: The summary must be based ONLY on what the user has shared with you in this conversation. It should reflect their personal understanding, their specific memories, feelings, and interpretations - NOT a general definition of the experience. The summary should capture what THEY believe this experience means to them based on what they've told you.
+
 After outputting the JSON marker, do not ask any further questions.
 
-If the request includes forceSummary=true, skip asking a question and immediately produce the summary + JSON marker.`
+If the request includes forceSummary=true, you MUST immediately produce a summary based on what the user has shared in the conversation, even if the conversation is brief. Do NOT refuse to provide a summary or ask for more information. Create a summary based on whatever the user has told you, no matter how limited. Start with a brief acknowledgment, then output the summary in the JSON marker format.`
 
       messages = body.history || []
       if (body.forceSummary) {
         messages.push({
           role: 'user',
-          content: 'Please provide the summary now.',
+          content: 'Please provide a summary now based on our conversation. Even if our conversation was brief, create a summary of what I have shared about what this experience means to me personally. Include the summary in the JSON marker format.',
         })
       }
     } else if (body.mode === 'generate-ideas') {
