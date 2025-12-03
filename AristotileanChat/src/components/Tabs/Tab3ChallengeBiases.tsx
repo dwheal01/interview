@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useSession } from '../../context/SessionContext'
 import { parseModelOutput, extractBiases, extractChallengingIdeas } from '../../utils/parseModelOutput'
 
@@ -14,7 +14,7 @@ export function Tab3ChallengeBiases() {
   const [challengingIdeas, setChallengingIdeas] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(false)
 
-  const handleAnalyze = async () => {
+  const handleAnalyze = useCallback(async () => {
     if (!tab1Summary) {
       alert('Please complete Tab 1 first')
       return
@@ -55,15 +55,14 @@ export function Tab3ChallengeBiases() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [tab1Summary, experience, myIdeas, allSuggestedIdeas])
 
   // Auto-analyze when tab is accessed if we have data
   useEffect(() => {
     if (tab1Summary && (myIdeas.length > 0 || allSuggestedIdeas.length > 0) && biases.length === 0 && !isLoading) {
       handleAnalyze()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab1Summary, myIdeas.length, allSuggestedIdeas.length])
+  }, [tab1Summary, myIdeas.length, allSuggestedIdeas.length, biases.length, isLoading, handleAnalyze])
 
   return (
     <div className="flex flex-col h-full bg-gray-800 p-6 overflow-y-auto">
