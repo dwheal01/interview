@@ -1,15 +1,28 @@
-import { doc, setDoc, deleteDoc } from 'firebase/firestore';
 import type { LocalUser } from '../types';
+import type { FirestoreService } from './firestoreService';
 import { isFirebaseEnabled, getDb, WORKSPACE_ID } from '../config/firebase';
+import { doc, setDoc, deleteDoc } from 'firebase/firestore';
 
 /**
  * Service for lock operations
  * Locks are only available in Firebase mode (not localStorage)
+ * Accepts optional FirestoreService for dependency injection
  */
 export const lockService = {
-  async acquireLock(noteId: string, localUser: LocalUser): Promise<void> {
-    if (!isFirebaseEnabled()) return; // No locks in localStorage mode
+  async acquireLock(
+    noteId: string,
+    localUser: LocalUser,
+    firestoreService?: FirestoreService | null
+  ): Promise<void> {
+    // Use injected service if provided, otherwise fallback to direct import
+    if (firestoreService) {
+      if (!firestoreService.isEnabled()) return;
+      await firestoreService.acquireLock(noteId, localUser);
+      return;
+    }
 
+    // Fallback to direct import (for backward compatibility)
+    if (!isFirebaseEnabled()) return;
     const db = getDb();
     if (!db) return;
 
@@ -30,9 +43,16 @@ export const lockService = {
     }
   },
 
-  async releaseLock(noteId: string): Promise<void> {
-    if (!isFirebaseEnabled()) return; // No locks in localStorage mode
+  async releaseLock(noteId: string, firestoreService?: FirestoreService | null): Promise<void> {
+    // Use injected service if provided, otherwise fallback to direct import
+    if (firestoreService) {
+      if (!firestoreService.isEnabled()) return;
+      await firestoreService.releaseLock(noteId);
+      return;
+    }
 
+    // Fallback to direct import (for backward compatibility)
+    if (!isFirebaseEnabled()) return;
     const db = getDb();
     if (!db) return;
 

@@ -4,6 +4,7 @@ import { noteService } from '../services/noteService';
 import { lockService } from '../services/lockService';
 import { useUIState } from '../context/UIStateContext';
 import { useErrorNotification } from '../context/ErrorNotificationContext';
+import { useFirestoreService } from '../context/FirestoreContext';
 
 type UseNoteOperationsParams = {
   localUser: LocalUser | null;
@@ -48,6 +49,7 @@ export function useNoteOperations({
   // Get UI state from context instead of managing it here
   const { selectedNoteId, setSelectedNoteId, editingNoteId, setEditingNoteId } = useUIState();
   const { showError } = useErrorNotification();
+  const firestoreService = useFirestoreService();
 
   const onPlaceNote = useCallback(
     async (canvasX: number, canvasY: number) => {
@@ -109,26 +111,26 @@ export function useNoteOperations({
       }
       setEditingNoteId(noteId);
       try {
-        await lockService.acquireLock(noteId, localUser);
+        await lockService.acquireLock(noteId, localUser, firestoreService);
       } catch (error) {
         setEditingNoteId(null);
         showError('Failed to acquire edit lock. Another user may be editing this note.', 'error');
       }
     },
-    [localUser, locks, showError]
+    [localUser, locks, showError, firestoreService]
   );
 
   const onStopEdit = useCallback(async (noteId: string) => {
     if (editingNoteId === noteId) {
       setEditingNoteId(null);
       try {
-        await lockService.releaseLock(noteId);
+        await lockService.releaseLock(noteId, firestoreService);
       } catch (error) {
         // Non-critical error, just log it
         console.error('Failed to release lock:', error);
       }
     }
-  }, [editingNoteId]);
+  }, [editingNoteId, firestoreService]);
 
   const onBeginDragNote = useCallback(
     async (id: string, _startCanvasX: number, _startCanvasY: number) => {

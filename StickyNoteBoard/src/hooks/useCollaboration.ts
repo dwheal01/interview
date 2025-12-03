@@ -6,6 +6,7 @@ import { usePresenceSubscription } from './usePresenceSubscription';
 import { useCursorsSubscription } from './useCursorsSubscription';
 import { usePresenceHeartbeat } from './usePresenceHeartbeat';
 import { cursorService } from '../services/cursorService';
+import { useFirestoreService } from '../context/FirestoreContext';
 
 /**
  * Custom hook that manages all collaboration-related state and operations
@@ -37,13 +38,15 @@ export function useCollaborationHeartbeat(localUser: LocalUser | null) {
  * Hook to handle cursor movement updates
  */
 export function useCursorUpdates(localUser: LocalUser | null) {
+  const firestoreService = useFirestoreService();
+
   const handleCursorMove = useCallback(
     (canvasX: number, canvasY: number) => {
       if (localUser) {
-        cursorService.updateCursor(canvasX, canvasY, localUser);
+        cursorService.updateCursor(canvasX, canvasY, localUser, firestoreService);
       }
     },
-    [localUser]
+    [localUser, firestoreService]
   );
 
   return { handleCursorMove };

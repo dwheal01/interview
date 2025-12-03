@@ -11,6 +11,8 @@ import { AppModeProvider, useAppMode } from './context/AppModeContext';
 import { UserSessionProvider, useUserSession } from './context/UserSessionContext';
 import { UIStateProvider, useUIState } from './context/UIStateContext';
 import { ErrorNotificationProvider } from './context/ErrorNotificationContext';
+import { FirestoreProvider } from './context/FirestoreContext';
+import { createFirestoreService } from './config/firebase';
 import { useNoteOperations } from './hooks/useNoteOperations';
 import { useCollaboration, useCollaborationHeartbeat, useCursorUpdates } from './hooks/useCollaboration';
 import { useBrowserZoomPrevention } from './hooks/useBrowserZoomPrevention';
@@ -139,16 +141,21 @@ function AppContent() {
 }
 
 function App() {
+  // Create Firestore service instance (dependency injection)
+  const firestoreService = useMemo(() => createFirestoreService(), []);
+
   return (
     <ErrorBoundary>
       <ErrorNotificationProvider>
-        <UserSessionProvider>
-          <CanvasProvider>
-            <UIStateProvider>
-              <AppModeProviderWrapper />
-            </UIStateProvider>
-          </CanvasProvider>
-        </UserSessionProvider>
+        <FirestoreProvider firestoreService={firestoreService}>
+          <UserSessionProvider>
+            <CanvasProvider>
+              <UIStateProvider>
+                <AppModeProviderWrapper />
+              </UIStateProvider>
+            </CanvasProvider>
+          </UserSessionProvider>
+        </FirestoreProvider>
       </ErrorNotificationProvider>
     </ErrorBoundary>
   );

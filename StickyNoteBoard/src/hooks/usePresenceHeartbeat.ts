@@ -1,19 +1,21 @@
 import { useEffect } from 'react';
 import type { LocalUser } from '../types';
-import { isFirebaseEnabled } from '../config/firebase';
 import { presenceService } from '../services/presenceService';
+import { useFirestoreService } from '../context/FirestoreContext';
 
 /**
  * Hook to manage presence heartbeat
  * Updates presence at regular intervals and cleans up on unmount
  */
 export function usePresenceHeartbeat(localUser: LocalUser | null) {
+  const firestoreService = useFirestoreService();
+
   useEffect(() => {
-    if (!localUser || !isFirebaseEnabled()) return;
+    if (!localUser) return;
 
     const updatePresence = async () => {
       try {
-        await presenceService.updatePresence(localUser);
+        await presenceService.updatePresence(localUser, firestoreService);
       } catch (error) {
         console.error('Failed to update presence:', error);
       }
@@ -29,11 +31,11 @@ export function usePresenceHeartbeat(localUser: LocalUser | null) {
     return () => {
       clearInterval(interval);
       if (localUser) {
-        presenceService.removePresence(localUser.userId).catch(() => {
+        presenceService.removePresence(localUser.userId, firestoreService).catch(() => {
           // Ignore cleanup errors
         });
       }
     };
-  }, [localUser]);
+  }, [localUser, firestoreService]);
 }
 

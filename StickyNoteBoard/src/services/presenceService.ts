@@ -1,16 +1,28 @@
-import { doc, setDoc, deleteDoc } from 'firebase/firestore';
 import type { LocalUser } from '../types';
+import type { FirestoreService } from './firestoreService';
 import { isFirebaseEnabled, getDb, WORKSPACE_ID } from '../config/firebase';
+import { doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { PRESENCE_HEARTBEAT_MS } from '../constants';
 
 /**
  * Service for presence operations
  * Presence is only available in Firebase mode
+ * Accepts optional FirestoreService for dependency injection
  */
 export const presenceService = {
-  async updatePresence(localUser: LocalUser): Promise<void> {
-    if (!isFirebaseEnabled()) return;
+  async updatePresence(
+    localUser: LocalUser,
+    firestoreService?: FirestoreService | null
+  ): Promise<void> {
+    // Use injected service if provided, otherwise fallback to direct import
+    if (firestoreService) {
+      if (!firestoreService.isEnabled()) return;
+      await firestoreService.updatePresence(localUser);
+      return;
+    }
 
+    // Fallback to direct import (for backward compatibility)
+    if (!isFirebaseEnabled()) return;
     const db = getDb();
     if (!db) return;
 
@@ -31,9 +43,19 @@ export const presenceService = {
     }
   },
 
-  async removePresence(userId: string): Promise<void> {
-    if (!isFirebaseEnabled()) return;
+  async removePresence(
+    userId: string,
+    firestoreService?: FirestoreService | null
+  ): Promise<void> {
+    // Use injected service if provided, otherwise fallback to direct import
+    if (firestoreService) {
+      if (!firestoreService.isEnabled()) return;
+      await firestoreService.removePresence(userId);
+      return;
+    }
 
+    // Fallback to direct import (for backward compatibility)
+    if (!isFirebaseEnabled()) return;
     const db = getDb();
     if (!db) return;
 

@@ -1,5 +1,7 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, type Firestore } from 'firebase/firestore';
+import { FirestoreServiceImpl } from '../services/firestoreServiceImpl';
+import type { FirestoreService } from '../services/firestoreService';
 
 // Firebase configuration from environment variables
 const firebaseConfig = {
@@ -19,7 +21,7 @@ const isFirebaseConfigured = () => {
 };
 
 let app: ReturnType<typeof initializeApp> | null = null;
-let db: ReturnType<typeof getFirestore> | null = null;
+let db: Firestore | null = null;
 
 if (isFirebaseConfigured()) {
   try {
@@ -33,4 +35,12 @@ if (isFirebaseConfigured()) {
 export const isFirebaseEnabled = () => db !== null;
 export const getDb = () => db;
 export const WORKSPACE_ID = "default";
+
+/**
+ * Factory function to create FirestoreService instance
+ * This allows dependency injection and easier testing
+ */
+export function createFirestoreService(): FirestoreService {
+  return new FirestoreServiceImpl(db, WORKSPACE_ID, isFirebaseEnabled());
+}
 
