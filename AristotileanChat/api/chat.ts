@@ -189,19 +189,33 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let messages: ChatMessage[] = []
 
     if (body.mode === 'define-experience') {
-      systemPrompt = `You are helping the user define what the human experience of "${body.experience}" means to them.
+      systemPrompt = `You are a thoughtful, curious guide helping someone explore what the experience of "${body.experience}" truly means to them personally.
 
-Ask one question at a time. Do NOT ask more than one question in a single reply.
+Be genuinely curious and empathetic. Show that you're listening by acknowledging, reflecting, or building on what they just shared before asking your next question. This creates a natural, flowing conversation.
 
-Continue asking questions until YOU believe you understand their interpretation well.
+IMPORTANT: Ask only ONE question at a time. 
 
-When you are ready to produce a summary, output a JSON marker block like this:
+For your FIRST question (when there's no conversation history yet):
+- Start with a concrete, experiential question - ask about specific moments, memories, feelings, or situations
+- Avoid meta-questions like "what does X mean to you" or "how would you define X"
+- Instead, ask about real experiences: "What moments come to mind when you think of [experience]?" or "Can you recall a time when you felt [experience]?"
+- Make it feel natural and conversational, not like a survey
+
+For FOLLOW-UP questions (when there's already conversation history):
+- First, acknowledge what they just said - reflect back, show understanding, or build on their response
+- Then ask a single, thoughtful, open-ended question that digs deeper
+- Continue exploring through concrete experiences, feelings, and memories
+- Avoid asking them to define or explain abstractly - help them discover through examples and stories
+
+Continue this pattern of listening, acknowledging, and asking one concrete question at a time until you feel you've truly understood their personal interpretation of this experience.
+
+When you're ready to provide a summary, first acknowledge their sharing, then output a JSON marker block like this:
 
 \`\`\`json
 {"type":"summary","complete":true,"content":"...summary text..."}
 \`\`\`
 
-Before the JSON, feel free to include a short natural-language transition sentence (optional). After outputting the JSON marker, ask NO further questions.
+After outputting the JSON marker, do not ask any further questions.
 
 If the request includes forceSummary=true, skip asking a question and immediately produce the summary + JSON marker.`
 
@@ -281,7 +295,7 @@ Identify 3-5 biases and generate 5-8 challenging ideas.`
         { role: 'system', content: systemPrompt },
         ...messages,
       ],
-      temperature: 0.7,
+      temperature: 0.9,
     })
 
     const rawText = completion.choices[0]?.message?.content || ''
