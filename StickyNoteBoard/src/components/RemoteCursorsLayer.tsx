@@ -1,4 +1,4 @@
-import { useMemo, memo } from 'react';
+import { useMemo, memo, useState, useEffect } from 'react';
 import type { CursorDoc } from '../types';
 import type { CanvasTransform } from '../types';
 import { CURSOR_TIMEOUT_MS, CURSOR_SIZE, CURSOR_LABEL_MARGIN_LEFT, CURSOR_LABEL_MARGIN_TOP, CURSOR_LABEL_FONT_SIZE } from '../constants';
@@ -8,14 +8,27 @@ type RemoteCursorsLayerProps = {
   canvas?: CanvasTransform; // Not used but kept for potential future use
 };
 
+const CURSOR_UPDATE_INTERVAL_MS = 1_000; // Update every second for smoother cursor tracking
+
 function RemoteCursorsLayerComponent({ cursors }: RemoteCursorsLayerProps) {
+  // Use state to track current time, updated via effect (not during render)
+  const [currentTime, setCurrentTime] = useState(() => Date.now());
+
+  // Update current time periodically
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(Date.now());
+    }, CURSOR_UPDATE_INTERVAL_MS);
+
+    return () => clearInterval(interval);
+  }, []);
+
   // Memoize filtered cursors to avoid recalculating on every render
   const activeCursors = useMemo(() => {
-    const now = Date.now();
     return cursors.filter(
-      cursor => now - cursor.lastMovedAt < CURSOR_TIMEOUT_MS
+      cursor => currentTime - cursor.lastMovedAt < CURSOR_TIMEOUT_MS
     );
-  }, [cursors]);
+  }, [cursors, currentTime]);
 
   return (
     <>

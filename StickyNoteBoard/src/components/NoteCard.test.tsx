@@ -1,7 +1,9 @@
+/// <reference types="@testing-library/jest-dom/vitest" />
+import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { NoteCard } from './NoteCard';
-import { createMockNote, createMockLock, createMockUser } from '../test/utils/testUtils';
+import { createMockNote, createMockLock } from '../test/utils/testUtils';
 
 describe('NoteCard', () => {
   const mockOnMouseDown = vi.fn();
@@ -195,9 +197,7 @@ describe('NoteCard', () => {
     expect(noteCard.style.zIndex).toBe('5');
   });
 
-  it('should auto-resize textarea when content changes', () => {
-    const { container } = render(<NoteCard {...defaultProps} />);
-    
+  it('should auto-resize textarea when content changes', () => {    
     const textarea = screen.getByDisplayValue('Test content') as HTMLTextAreaElement;
     const originalHeight = textarea.style.height;
     

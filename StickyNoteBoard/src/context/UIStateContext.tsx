@@ -1,17 +1,7 @@
-import { createContext, useContext, useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import type { NoteColor } from '../types';
-
-type UIStateContextType = {
-  activeColor: NoteColor;
-  setActiveColor: (color: NoteColor) => void;
-  selectedNoteId: string | null;
-  setSelectedNoteId: (id: string | null) => void;
-  editingNoteId: string | null;
-  setEditingNoteId: (id: string | null) => void;
-};
-
-const UIStateContext = createContext<UIStateContextType | null>(null);
+import { UIStateContext } from './uiStateContextDef';
 
 /**
  * UI State Context
@@ -50,11 +40,5 @@ export function UIStateProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useUIState() {
-  const context = useContext(UIStateContext);
-  if (!context) {
-    throw new Error('useUIState must be used within UIStateProvider');
-  }
-  return context;
-}
+// Hook moved to hooks/useUIState.ts to satisfy Fast Refresh requirements
 

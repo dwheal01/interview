@@ -67,3 +67,6 @@ export type LocalUser = {
   color: string;
 };
 
+// App mode type
+export type AppMode = "idle" | "adding" | "dragging" | "panning";
+

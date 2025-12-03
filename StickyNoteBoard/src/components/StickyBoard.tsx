@@ -1,12 +1,23 @@
 import { useRef, useState, useEffect, useMemo, useCallback, memo } from 'react';
-import type { NoteDoc, CanvasTransform, LockDoc, CursorDoc } from '../types';
+import type { NoteDoc, CanvasTransform, LockDoc, CursorDoc, AppMode } from '../types';
 import { NoteCard } from './NoteCard';
 import { RemoteCursorsLayer } from './RemoteCursorsLayer';
 import { ZOOM_IN_FACTOR, ZOOM_OUT_FACTOR, DRAG_THRESHOLD_PX, GRID_SIZE } from '../constants';
 import { checkTrashOverlap as checkTrashOverlapUtil } from '../utils/collisionDetection';
 import { screenToCanvas, getRelativeCoordinates } from '../utils/canvasUtils';
 
-type AppMode = "idle" | "adding" | "dragging" | "panning";
+// Note color classes map (moved outside component for better performance and stability)
+const NOTE_COLOR_CLASSES_MAP: Record<string, string> = {
+  "yellow": "bg-yellow-200 border-yellow-300",
+  "pink": "bg-pink-200 border-pink-300",
+  "blue": "bg-sky-200 border-sky-300",
+  "green": "bg-green-200 border-green-300",
+};
+
+// Helper function to get note color classes (moved outside component for stability)
+const getNoteColorClasses = (color: string): string => {
+  return NOTE_COLOR_CLASSES_MAP[color] || NOTE_COLOR_CLASSES_MAP["yellow"];
+};
 
 type StickyBoardProps = {
   notes: NoteDoc[];
@@ -39,7 +50,8 @@ function StickyBoardComponent({
   canvas,
   mode,
   ghostPosition,
-  draggingNoteId: _draggingNoteId,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  draggingNoteId: _draggingNoteId, // Used in memo comparison function below, not in component body
   activeColor,
   locks,
   localUserId,
@@ -70,11 +82,11 @@ function StickyBoardComponent({
   const [isDragging, setIsDragging] = useState(false);
 
   // Convert screen coordinates to canvas coordinates using element-relative coordinates
-  const screenToCanvasLocal = (clientX: number, clientY: number): { x: number; y: number } => {
+  const screenToCanvasLocal = useCallback((clientX: number, clientY: number): { x: number; y: number } => {
     if (!boardRef.current) return { x: 0, y: 0 };
     const rect = boardRef.current.getBoundingClientRect();
     return screenToCanvas(clientX, clientY, canvas, undefined, undefined, rect);
-  };
+  }, [canvas]);
 
   // Check if note card overlaps with trash
   const checkTrashOverlap = useCallback((note: NoteDoc) => {
@@ -187,7 +199,7 @@ function StickyBoardComponent({
     }
   }, [canvas, onCursorMove, panStart, dragState, isDragging, screenToCanvasLocal, onPan, onBeginDragNote, onDragNote, notes, checkTrashOverlap]);
 
-  const handleMouseUpCanvas = useCallback((_e: React.MouseEvent) => {
+  const handleMouseUpCanvas = useCallback(() => {
     if (panStart) {
       setPanStart(null);
     }
@@ -229,20 +241,6 @@ function StickyBoardComponent({
     }
   }, [locks, localUserId, onSelectNote, notes]);
 
-
-  // Memoize note color classes map (moved outside component for better performance)
-  const NOTE_COLOR_CLASSES_MAP: Record<string, string> = {
-    "yellow": "bg-yellow-200 border-yellow-300",
-    "pink": "bg-pink-200 border-pink-300",
-    "blue": "bg-sky-200 border-sky-300",
-    "green": "bg-green-200 border-green-300",
-  };
-
-  // Memoize note color classes function
-  const noteColorClasses = useCallback((color: string) => {
-    return NOTE_COLOR_CLASSES_MAP[color] || NOTE_COLOR_CLASSES_MAP["yellow"];
-  }, []);
-
   // Memoize ghost note style to avoid recalculation
   const ghostNoteStyle = useMemo(() => ({
     left: ghostPosition?.x ?? 0,
@@ -251,8 +249,8 @@ function StickyBoardComponent({
 
   // Memoize ghost note className
   const ghostNoteClassName = useMemo(() => {
-    return `absolute w-44 min-h-44 border shadow-sm flex flex-col p-2 text-sm pointer-events-none opacity-50 ${noteColorClasses(activeColor)}`;
-  }, [activeColor, noteColorClasses]);
+    return `absolute w-44 min-h-44 border shadow-sm flex flex-col p-2 text-sm pointer-events-none opacity-50 ${getNoteColorClasses(activeColor)}`;
+  }, [activeColor]);
 
   // Memoize canvas transform style
   const canvasTransformStyle = useMemo(() => ({
@@ -266,27 +264,9 @@ function StickyBoardComponent({
     backgroundSize: `${GRID_SIZE}px ${GRID_SIZE}px`,
   }), []);
 
-  // Memoize individual note handlers to prevent NoteCard re-renders
-  // Create handlers map only when notes array reference changes
-  const noteHandlersMap = useMemo(() => {
-    const map = new Map<string, {
-      onMouseDown: (e: React.MouseEvent) => void;
-      onChange: (fields: Partial<NoteDoc>) => void;
-      onStartEdit: () => void;
-      onStopEdit: () => void;
-    }>();
-    
-    notes.forEach((note) => {
-      map.set(note.id, {
-        onMouseDown: (e: React.MouseEvent) => handleNoteMouseDown(e, note.id),
-        onChange: (fields: Partial<NoteDoc>) => onUpdateNote(note.id, fields),
-        onStartEdit: () => onStartEdit(note.id),
-        onStopEdit: () => onStopEdit(note.id),
-      });
-    });
-    
-    return map;
-  }, [notes, handleNoteMouseDown, onUpdateNote, onStartEdit, onStopEdit]);
+  // Note: We create handlers inline to avoid React compiler warning about refs.
+  // Handlers are stable because handleNoteMouseDown, onUpdateNote, etc. are memoized.
+  // Refs are only accessed when handlers are called (in event handlers), not during render.
 
   return (
     <div
@@ -307,23 +287,19 @@ function StickyBoardComponent({
           className="absolute top-1/2 left-1/2"
           style={canvasTransformStyle}
         >
-          {notes.map((note) => {
-            const handlers = noteHandlersMap.get(note.id);
-            if (!handlers) return null;
-            return (
-              <NoteCard
-                key={note.id}
-                note={note}
-                isSelected={selectedNoteId === note.id}
-                lock={locks[note.id] || null}
-                localUserId={localUserId}
-                onMouseDown={handlers.onMouseDown}
-                onChange={handlers.onChange}
-                onStartEdit={handlers.onStartEdit}
-                onStopEdit={handlers.onStopEdit}
-              />
-            );
-          })}
+          {notes.map((note) => (
+            <NoteCard
+              key={note.id}
+              note={note}
+              isSelected={selectedNoteId === note.id}
+              lock={locks[note.id] || null}
+              localUserId={localUserId}
+              onMouseDown={(e) => handleNoteMouseDown(e, note.id)}
+              onChange={(fields) => onUpdateNote(note.id, fields)}
+              onStartEdit={() => onStartEdit(note.id)}
+              onStopEdit={() => onStopEdit(note.id)}
+            />
+          ))}
           
           <RemoteCursorsLayer cursors={cursors} canvas={canvas} />
           

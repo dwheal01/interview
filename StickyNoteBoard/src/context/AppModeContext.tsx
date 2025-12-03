@@ -1,24 +1,8 @@
-import { createContext, useContext, useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react';
-import type { CanvasTransform } from '../types';
+import type { CanvasTransform, AppMode } from '../types';
 import { screenToCanvas } from '../utils/canvasUtils';
-
-export type AppMode = "idle" | "adding" | "dragging" | "panning";
-
-type AppModeContextType = {
-  mode: AppMode;
-  setMode: (mode: AppMode) => void;
-  ghostPosition: { x: number; y: number } | null;
-  setGhostPosition: (position: { x: number; y: number } | null) => void;
-  draggingNoteId: string | null;
-  setDraggingNoteId: (id: string | null) => void;
-  isOverTrash: boolean;
-  setIsOverTrash: (value: boolean) => void;
-  enterAddMode: () => void;
-  exitAddMode: () => void;
-};
-
-const AppModeContext = createContext<AppModeContextType | null>(null);
+import { AppModeContext } from './appModeContextDef';
 
 export function AppModeProvider({ 
   children,
@@ -50,29 +34,25 @@ export function AppModeProvider({
     const isAdding = mode === "adding";
     isAddingModeRef.current = isAdding;
     
+    // Don't set state synchronously in effect - exitAddMode already handles clearing ghost position
     if (!isAdding) {
-      setGhostPosition(null);
       return;
     }
 
     const handleMouseMove = (e: MouseEvent) => {
       if (!isAddingModeRef.current) {
-        setGhostPosition(null);
         return;
       }
       
       const canvasPos = screenToCanvas(e.clientX, e.clientY, canvas);
-      
-      if (isAddingModeRef.current) {
-        setGhostPosition(canvasPos);
-      }
+      setGhostPosition(canvasPos);
     };
 
     window.addEventListener('mousemove', handleMouseMove);
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
-      setGhostPosition(null);
       isAddingModeRef.current = false;
+      // Don't set state in cleanup - let exitAddMode handle it
     };
   }, [mode, canvas]);
 
@@ -96,11 +76,7 @@ export function AppModeProvider({
   );
 }
 
-export function useAppMode(): AppModeContextType {
-  const context = useContext(AppModeContext);
-  if (!context) {
-    throw new Error('useAppMode must be used within AppModeProvider');
-  }
-  return context;
-}
+// Hook exported separately to satisfy Fast Refresh requirements
+// Fast Refresh requires files to export either only components or only non-components
+// Hook moved to hooks/useAppMode.ts to satisfy Fast Refresh requirements
 

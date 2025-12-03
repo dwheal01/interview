@@ -3,7 +3,7 @@ import { collection, query, onSnapshot } from 'firebase/firestore';
 import type { NoteDoc } from '../types';
 import { isFirebaseEnabled, getDb, WORKSPACE_ID } from '../config/firebase';
 import { LocalStorageAdapter } from '../services/storageAdapter';
-import { useErrorNotification } from '../context/ErrorNotificationContext';
+import { useErrorNotification } from './useErrorNotification';
 import { validateNoteDoc, validateNoteDocArray } from '../utils/validation';
 
 /**

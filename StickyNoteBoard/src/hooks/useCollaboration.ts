@@ -6,7 +6,7 @@ import { usePresenceSubscription } from './usePresenceSubscription';
 import { useCursorsSubscription } from './useCursorsSubscription';
 import { usePresenceHeartbeat } from './usePresenceHeartbeat';
 import { cursorService } from '../services/cursorService';
-import { useFirestoreService } from '../context/FirestoreContext';
+import { useFirestoreService } from './useFirestoreService';
 
 /**
  * Custom hook that manages all collaboration-related state and operations

@@ -1,12 +1,6 @@
-import { createContext, useContext } from 'react';
 import type { ReactNode } from 'react';
 import type { FirestoreService } from '../services/firestoreService';
-
-/**
- * Context for Firestore service dependency injection
- * Allows services and hooks to access Firestore without direct imports
- */
-const FirestoreContext = createContext<FirestoreService | null>(null);
+import { FirestoreContext } from './firestoreContextDef';
 
 export interface FirestoreProviderProps {
   children: ReactNode;
@@ -24,11 +18,5 @@ export function FirestoreProvider({ children, firestoreService }: FirestoreProvi
   );
 }
 
-/**
- * Hook to access Firestore service from context
- * Returns null if not provided (for localStorage-only mode)
- */
-export function useFirestoreService(): FirestoreService | null {
-  return useContext(FirestoreContext);
-}
+// Hook moved to hooks/useFirestoreService.ts to satisfy Fast Refresh requirements
 

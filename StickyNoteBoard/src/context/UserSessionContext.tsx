@@ -1,30 +1,18 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import type { LocalUser } from '../types';
 import { statePersistence } from '../services/statePersistence';
-
-type UserSessionContextType = {
-  localUser: LocalUser | null;
-  showUsernameModal: boolean;
-  setShowUsernameModal: (show: boolean) => void;
-  handleJoin: (username: string) => void;
-};
-
-const UserSessionContext = createContext<UserSessionContextType | null>(null);
+import { UserSessionContext } from './userSessionContextDef';
 
 export function UserSessionProvider({ children }: { children: ReactNode }) {
-  const [localUser, setLocalUser] = useState<LocalUser | null>(null);
-  const [showUsernameModal, setShowUsernameModal] = useState(false);
-
-  // Initialize local user from state persistence service
-  useEffect(() => {
-    const persisted = statePersistence.loadUserSession();
-    if (persisted) {
-      setLocalUser(persisted);
-    } else {
-      setShowUsernameModal(true);
-    }
-  }, []);
+  // Use lazy initialization to load from localStorage during initial render
+  // This avoids calling setState synchronously in an effect
+  const [localUser, setLocalUser] = useState<LocalUser | null>(() => {
+    return statePersistence.loadUserSession();
+  });
+  const [showUsernameModal, setShowUsernameModal] = useState(() => {
+    return !statePersistence.loadUserSession();
+  });
 
   const handleJoin = useCallback((username: string) => {
     // Generate user ID and color
@@ -58,11 +46,5 @@ export function UserSessionProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useUserSession() {
-  const context = useContext(UserSessionContext);
-  if (!context) {
-    throw new Error('useUserSession must be used within UserSessionProvider');
-  }
-  return context;
-}
+// Hook moved to hooks/useUserSession.ts to satisfy Fast Refresh requirements
 

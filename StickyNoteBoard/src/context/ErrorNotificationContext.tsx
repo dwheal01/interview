@@ -1,22 +1,5 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
-
-export type ErrorSeverity = 'error' | 'warning' | 'info';
-
-export interface ErrorNotification {
-  id: string;
-  message: string;
-  severity: ErrorSeverity;
-  timestamp: number;
-}
-
-type ErrorNotificationContextType = {
-  errors: ErrorNotification[];
-  showError: (message: string, severity?: ErrorSeverity) => void;
-  dismissError: (id: string) => void;
-  clearAll: () => void;
-};
-
-const ErrorNotificationContext = createContext<ErrorNotificationContextType | null>(null);
+import { useState, useCallback, type ReactNode } from 'react';
+import { ErrorNotificationContext, type ErrorNotification, type ErrorSeverity } from './errorNotificationContextDef';
 
 /**
  * Error Notification Context
@@ -65,11 +48,5 @@ export function ErrorNotificationProvider({ children }: { children: ReactNode })
   );
 }
 
-export function useErrorNotification() {
-  const context = useContext(ErrorNotificationContext);
-  if (!context) {
-    throw new Error('useErrorNotification must be used within ErrorNotificationProvider');
-  }
-  return context;
-}
+// Hook moved to hooks/useErrorNotification.ts to satisfy Fast Refresh requirements
 

@@ -36,44 +36,42 @@ function NoteCardComponent({
   const titleInputRef = useRef<HTMLInputElement>(null);
   const cursorPositionRef = useRef<{ title: number | null; content: number | null }>({ title: null, content: null });
 
+  // Helper function to restore cursor position for any input/textarea element
+  const restoreCursorPosition = useCallback((
+    element: HTMLInputElement | HTMLTextAreaElement | null,
+    storedPosition: number | null,
+    positionKey: 'title' | 'content'
+  ) => {
+    if (!element || storedPosition === null || document.activeElement !== element) {
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      if (element && document.activeElement === element) {
+        const safePos = Math.min(storedPosition, element.value.length);
+        element.setSelectionRange(safePos, safePos);
+        cursorPositionRef.current[positionKey] = null;
+      }
+    });
+  }, []);
+
   // Auto-resize textarea based on content and restore cursor position
   useEffect(() => {
     const textarea = textareaRef.current;
     if (textarea) {
-      const cursorPos = cursorPositionRef.current.content;
-      
       // Auto-resize
       textarea.style.height = 'auto';
       textarea.style.height = `${textarea.scrollHeight}px`;
       
       // Restore cursor position if it was set (after a user-initiated change)
-      if (cursorPos !== null && document.activeElement === textarea) {
-        // Use requestAnimationFrame to ensure DOM is updated
-        requestAnimationFrame(() => {
-          if (textarea && document.activeElement === textarea) {
-            const safePos = Math.min(cursorPos, textarea.value.length);
-            textarea.setSelectionRange(safePos, safePos);
-            cursorPositionRef.current.content = null;
-          }
-        });
-      }
+      restoreCursorPosition(textarea, cursorPositionRef.current.content, 'content');
     }
-  }, [note.content]);
+  }, [note.content, restoreCursorPosition]);
 
   // Restore cursor position for title input
   useEffect(() => {
-    const input = titleInputRef.current;
-    if (input && cursorPositionRef.current.title !== null && document.activeElement === input) {
-      // Use requestAnimationFrame to ensure DOM is updated
-      requestAnimationFrame(() => {
-        if (input && document.activeElement === input) {
-          const safePos = Math.min(cursorPositionRef.current.title!, input.value.length);
-          input.setSelectionRange(safePos, safePos);
-          cursorPositionRef.current.title = null;
-        }
-      });
-    }
-  }, [note.title]);
+    restoreCursorPosition(titleInputRef.current, cursorPositionRef.current.title, 'title');
+  }, [note.title, restoreCursorPosition]);
 
   const handleFocus = useCallback(() => {
     onStartEdit();
@@ -97,27 +95,31 @@ function NoteCardComponent({
     onMouseDown(e);
   }, [lockedByOther, onMouseDown]);
 
+  // Helper function to preserve cursor position before update
+  const preserveCursorAndUpdate = useCallback((
+    field: 'title' | 'content',
+    value: string,
+    cursorPos: number
+  ) => {
+    onChange({ [field]: value });
+    cursorPositionRef.current[field] = cursorPos;
+  }, [onChange]);
+
   const handleTextareaChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     // Preserve cursor position before update
-    const cursorPos = e.target.selectionStart;
-    onChange({ content: e.target.value });
-    
-    // Store cursor position to restore after re-render
-    cursorPositionRef.current.content = cursorPos;
+    const cursorPos = e.target.selectionStart ?? 0;
+    preserveCursorAndUpdate('content', e.target.value, cursorPos);
     
     // Auto-resize on change
     e.target.style.height = 'auto';
     e.target.style.height = `${e.target.scrollHeight}px`;
-  }, [onChange]);
+  }, [preserveCursorAndUpdate]);
 
   const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     // Preserve cursor position before update
-    const cursorPos = e.target.selectionStart;
-    onChange({ title: e.target.value });
-    
-    // Store cursor position to restore after re-render
-    cursorPositionRef.current.title = cursorPos;
-  }, [onChange]);
+    const cursorPos = e.target.selectionStart ?? 0;
+    preserveCursorAndUpdate('title', e.target.value, cursorPos);
+  }, [preserveCursorAndUpdate]);
 
   // Memoize style object
   const noteStyle = useMemo(() => ({

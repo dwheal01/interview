@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import type { LocalUser } from '../types';
 import { presenceService } from '../services/presenceService';
-import { useFirestoreService } from '../context/FirestoreContext';
+import { useFirestoreService } from './useFirestoreService';
 
 /**
  * Hook to manage presence heartbeat

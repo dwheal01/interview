@@ -1,4 +1,4 @@
-import { useErrorNotification } from '../context/ErrorNotificationContext';
+import { useErrorNotification } from '../hooks/useErrorNotification';
 
 /**
  * Error Notification Toast Component

@@ -2,13 +2,15 @@ import { useCallback } from 'react';
 import type { NoteDoc, LocalUser, NoteColor } from '../types';
 import { noteService } from '../services/noteService';
 import { lockService } from '../services/lockService';
-import { useUIState } from '../context/UIStateContext';
-import { useErrorNotification } from '../context/ErrorNotificationContext';
-import { useFirestoreService } from '../context/FirestoreContext';
+import { useUIState } from './useUIState';
+import { useErrorNotification } from './useErrorNotification';
+import { useFirestoreService } from './useFirestoreService';
+
+import type { LockDoc } from '../types';
 
 type UseNoteOperationsParams = {
   localUser: LocalUser | null;
-  locks: Record<string, any>;
+  locks: Record<string, LockDoc>;
   notes: NoteDoc[];
   activeColor: NoteColor; // From UIState context
   nextZIndex: number;
@@ -25,7 +27,7 @@ type UseNoteOperationsReturn = {
   onSelectNote: (id: string | null) => void;
   onStartEdit: (noteId: string) => Promise<void>;
   onStopEdit: (noteId: string) => Promise<void>;
-  onBeginDragNote: (id: string, startCanvasX: number, startCanvasY: number) => Promise<void>;
+  onBeginDragNote: (id: string, _startCanvasX: number, _startCanvasY: number) => Promise<void>;
   onDragNote: (id: string, newCanvasX: number, newCanvasY: number) => Promise<void>;
   onEndDragNote: (id: string, isOverTrash: boolean) => Promise<void>;
 };
@@ -77,7 +79,7 @@ export function useNoteOperations({
       setNextZIndex((prev) => prev + 1);
       setSelectedNoteId(id);
     },
-    [localUser, activeColor, nextZIndex, setNextZIndex, exitAddMode, showError]
+    [localUser, activeColor, nextZIndex, setNextZIndex, exitAddMode, showError, setSelectedNoteId]
   );
 
   const onUpdateNote = useCallback(
@@ -112,12 +114,12 @@ export function useNoteOperations({
       setEditingNoteId(noteId);
       try {
         await lockService.acquireLock(noteId, localUser, firestoreService);
-      } catch (error) {
+      } catch {
         setEditingNoteId(null);
         showError('Failed to acquire edit lock. Another user may be editing this note.', 'error');
       }
     },
-    [localUser, locks, showError, firestoreService]
+    [localUser, locks, showError, firestoreService, setEditingNoteId]
   );
 
   const onStopEdit = useCallback(async (noteId: string) => {
@@ -133,6 +135,7 @@ export function useNoteOperations({
   }, [editingNoteId, firestoreService]);
 
   const onBeginDragNote = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async (id: string, _startCanvasX: number, _startCanvasY: number) => {
       if (!localUser) return;
       const lock = locks[id];
@@ -168,7 +171,7 @@ export function useNoteOperations({
         console.error('Failed to update note position:', result.message);
       }
     },
-    [localUser, locks, showError]
+    [localUser, locks]
   );
 
   const onEndDragNote = useCallback(
