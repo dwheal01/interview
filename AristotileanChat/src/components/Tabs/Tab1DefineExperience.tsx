@@ -51,9 +51,28 @@ export function Tab1DefineExperience() {
       }
 
       const data = await response.json()
-      const { parsed, cleanText } = parseModelOutput(data.rawText)
+      
+      // Ensure we have rawText
+      const rawText = data.rawText || data.assistantMessage || ''
+      if (!rawText) {
+        console.error('No text content in API response:', data)
+        throw new Error('Received empty response from API')
+      }
+      
+      const { parsed, cleanText } = parseModelOutput(rawText)
+      
+      // Use cleanText if it has content, otherwise fall back to rawText
+      const messageContent = (cleanText && cleanText.trim()) || rawText.trim()
+      
+      console.log('Message content:', { rawText, cleanText, messageContent, parsed })
+      
+      if (!messageContent) {
+        console.error('Message content is empty after parsing:', { rawText, cleanText, parsed })
+        throw new Error('Message content is empty')
+      }
 
-      const assistantMessage = createChatMessage('assistant', cleanText || data.rawText)
+      const assistantMessage = createChatMessage('assistant', messageContent)
+      console.log('Created assistant message:', assistantMessage)
 
       setTab1History([...updatedHistory, assistantMessage])
 
@@ -126,9 +145,32 @@ export function Tab1DefineExperience() {
           }
 
           const data = await response.json()
-          const { parsed, cleanText } = parseModelOutput(data.rawText)
+          
+          // Debug: log the response to see what we're getting
+          console.log('API Response:', data)
+          
+          // Ensure we have rawText
+          const rawText = data.rawText || data.assistantMessage || ''
+          if (!rawText) {
+            console.error('No text content in API response:', data)
+            throw new Error('Received empty response from API')
+          }
+          
+          const { parsed, cleanText } = parseModelOutput(rawText)
+          
+          // Use cleanText if it has content, otherwise fall back to rawText
+          // cleanText will be empty if the response only contained JSON blocks
+          const messageContent = (cleanText && cleanText.trim()) || rawText.trim()
+          
+          console.log('Message content:', { rawText, cleanText, messageContent, parsed })
+          
+          if (!messageContent) {
+            console.error('Message content is empty after parsing:', { rawText, cleanText, parsed })
+            throw new Error('Message content is empty')
+          }
 
-          const assistantMessage = createChatMessage('assistant', cleanText || data.rawText)
+          const assistantMessage = createChatMessage('assistant', messageContent)
+          console.log('Created assistant message:', assistantMessage)
 
           setTab1History([assistantMessage])
 

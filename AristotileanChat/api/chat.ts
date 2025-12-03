@@ -285,6 +285,14 @@ Identify 3-5 biases and generate 5-8 challenging ideas.`
     })
 
     const rawText = completion.choices[0]?.message?.content || ''
+    
+    // Log for debugging (remove in production if needed)
+    if (!rawText) {
+      console.error('OpenAI returned empty content:', {
+        choices: completion.choices,
+        usage: completion.usage,
+      })
+    }
 
     // Parse response based on mode
     if (body.mode === 'define-experience') {

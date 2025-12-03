@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import type { ChatMessage } from '../../context/SessionContext'
 
 type MessageBubbleProps = {
@@ -8,24 +8,45 @@ type MessageBubbleProps = {
 
 export function MessageBubble({ message, isStreaming = false }: MessageBubbleProps) {
   const [displayedLines, setDisplayedLines] = useState<string[]>([])
+  const currentIdxRef = useRef(0)
 
   useEffect(() => {
+    console.log('MessageBubble received message:', message)
     if (message.role === 'assistant' && message.content) {
-      const lines = message.content.split('\n').filter((line) => line.trim() !== '')
+      const content = message.content.trim()
       
+      // If content is empty, show a placeholder
+      if (!content) {
+        console.warn('Empty message content received:', message)
+        setDisplayedLines(['(Empty message)'])
+        return
+      }
+      
+      console.log('MessageBubble processing content:', content)
+      
+      const lines = content.split('\n').filter((line) => line.trim() !== '')
+      
+      // If all lines were filtered out (only whitespace), show the original content
       if (lines.length === 0) {
-        setDisplayedLines([message.content])
+        setDisplayedLines([content])
         return
       }
 
+      // For single-line messages, show immediately
+      if (lines.length === 1) {
+        setDisplayedLines([lines[0]])
+        return
+      }
+
+      // For multi-line messages, animate line by line
       setDisplayedLines([])
-      let currentIdx = 0
+      currentIdxRef.current = 0
 
       const revealNextLine = () => {
-        if (currentIdx < lines.length) {
+        if (currentIdxRef.current < lines.length) {
           setDisplayedLines((prev) => {
-            const next = [...prev, lines[currentIdx]]
-            currentIdx++
+            const next = [...prev, lines[currentIdxRef.current]]
+            currentIdxRef.current++
             return next
           })
         }
@@ -37,7 +58,7 @@ export function MessageBubble({ message, isStreaming = false }: MessageBubblePro
       }, 50)
 
       const interval = setInterval(() => {
-        if (currentIdx < lines.length) {
+        if (currentIdxRef.current < lines.length) {
           revealNextLine()
         } else {
           clearInterval(interval)

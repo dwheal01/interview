@@ -18,37 +18,98 @@ A guided human experience brainstorming chatbot built with Vite + React + TypeSc
 
 ### Prerequisites
 
-- Node.js 20+ 
+- Node.js 20+
 - npm or yarn
-- OpenAI API key
+- OpenAI API key ([Get one here](https://platform.openai.com/api-keys))
 - Vercel account (for deployment)
+
+### Getting Your OpenAI API Key
+
+1. Go to [OpenAI Platform](https://platform.openai.com/api-keys)
+2. Sign in or create an account
+3. Click "Create new secret key"
+4. Copy the key (it starts with `sk-` and you won't be able to see it again)
+5. **Important**: Keep this key secure and never commit it to version control
 
 ### Local Development
 
 1. **Install dependencies**:
+
    ```bash
    npm install
    ```
 
 2. **Set up environment variables**:
+
    Create a `.env.local` file in the root directory:
-   ```
-   OPENAI_API_KEY=your_openai_api_key_here
+
+   ```bash
+   # In the project root directory
+   echo "OPENAI_API_KEY=sk-your-actual-api-key-here" > .env.local
    ```
 
-3. **Run Vercel dev server** (for API functions):
+   Or manually create `.env.local` with:
+
+   ```
+   OPENAI_API_KEY=sk-your-actual-api-key-here
+   ```
+
+   **Note**: The `.env.local` file is already in `.gitignore` and won't be committed to version control.
+
+3. **Run Vercel dev server** (recommended for full functionality):
+
    ```bash
    npx vercel dev
    ```
-   
-   This will start both the Vite dev server and the serverless functions locally.
 
-4. **Or run Vite dev server only** (for frontend-only development):
+   This will:
+
+   - Start the Vite dev server (usually on `http://localhost:5173`)
+   - Start the serverless functions (usually on `http://localhost:3000`)
+   - Automatically load environment variables from `.env.local` and `.env`
+
+   **First time setup**: Vercel CLI will prompt you to link your project. You can:
+
+   - Press Enter to skip linking (works fine for local dev)
+   - Or link to an existing Vercel project if you have one
+
+4. **Verify it's working**:
+
+   - Open `http://localhost:5173` in your browser
+   - Enter an experience (e.g., "finding peace")
+   - You should see the AI's first question appear
+
+5. **Alternative: Vite dev server only** (for frontend-only development):
+
    ```bash
    npm run dev
    ```
-   
-   Note: API calls will fail in this mode unless you have a separate backend running.
+
+   **Note**: API calls will fail in this mode unless you have a separate backend running. Use `npx vercel dev` for full functionality.
+
+### Troubleshooting
+
+**Issue: "Missing credentials" or "OPENAI_API_KEY is not set"**
+
+- **Solution 1**: Make sure `.env.local` exists in the project root (same directory as `package.json`)
+- **Solution 2**: Restart `vercel dev` after creating/updating `.env.local`
+- **Solution 3**: Create a `.env` file as backup (Vercel dev loads both):
+  ```bash
+  cp .env.local .env
+  ```
+- **Solution 4**: Verify the API key format - it should start with `sk-` and have no extra spaces or quotes
+
+**Issue: "500 Internal Server Error"**
+
+- Check the Vercel dev terminal for detailed error messages
+- Verify your OpenAI API key is valid and has credits
+- Check that the API key doesn't have extra spaces or quotes around it
+
+**Issue: Vercel dev not loading environment variables**
+
+- Make sure `.env.local` is in the project root directory
+- Restart `vercel dev` completely (stop with Ctrl+C and restart)
+- Check Vercel dev output for "Loaded env from .env.local" message
 
 ### Building for Production
 
@@ -63,17 +124,31 @@ The build output will be in the `dist/` directory.
 1. **Push your code to GitHub**
 
 2. **Connect to Vercel**:
+
    - Go to [vercel.com](https://vercel.com)
    - Import your GitHub repository
    - Vercel will auto-detect the Vite configuration
 
 3. **Add Environment Variable**:
-   - In your Vercel project settings, add:
-     - `OPENAI_API_KEY` = your OpenAI API key
+
+   - Go to your Vercel project dashboard
+   - Navigate to **Settings** → **Environment Variables**
+   - Click **Add New**
+   - Name: `OPENAI_API_KEY`
+   - Value: Your OpenAI API key (starts with `sk-`)
+   - Select all environments (Production, Preview, Development)
+   - Click **Save**
+
+   **Important**: After adding the environment variable, you need to redeploy:
+
+   - Go to **Deployments** tab
+   - Click the three dots (⋯) on the latest deployment
+   - Click **Redeploy**
 
 4. **Deploy**:
    - Vercel will automatically deploy on every push to main
    - The `/api/chat.ts` file will be automatically deployed as a serverless function
+   - Make sure the environment variable is set before deploying
 
 ## Project Structure
 
