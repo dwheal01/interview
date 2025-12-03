@@ -114,7 +114,15 @@ export function Tab1DefineExperience() {
           })
 
           if (!response.ok) {
-            throw new Error('Failed to get response')
+            let errorMessage = `Server error: ${response.status}`
+            try {
+              const errorData = await response.json()
+              errorMessage = errorData.message || errorData.error || errorData.details || errorMessage
+            } catch {
+              // If JSON parsing fails, use status text
+              errorMessage = response.statusText || errorMessage
+            }
+            throw new Error(errorMessage)
           }
 
           const data = await response.json()
@@ -136,7 +144,8 @@ export function Tab1DefineExperience() {
             return
           }
           console.error('Error starting conversation:', error)
-          alert('Failed to start conversation. Please try again.')
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+          alert(`Failed to start conversation: ${errorMessage}`)
         } finally {
           // Only reset loading if this request wasn't aborted
           if (!isAborted(signal)) {

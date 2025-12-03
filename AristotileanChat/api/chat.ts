@@ -1,9 +1,21 @@
 import { OpenAI } from 'openai'
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
+// Initialize OpenAI client - will be created lazily to ensure env vars are loaded
+let openaiClient: OpenAI | null = null
+
+function getOpenAIClient(): OpenAI {
+  if (!openaiClient) {
+    const apiKey = process.env.OPENAI_API_KEY
+    if (!apiKey) {
+      throw new Error('OPENAI_API_KEY environment variable is not set')
+    }
+    openaiClient = new OpenAI({
+      apiKey,
+    })
+  }
+  return openaiClient
+}
 
 type ChatMessage = {
   role: 'user' | 'assistant'
@@ -148,6 +160,15 @@ function validateChatRequest(body: unknown): { valid: boolean; error?: string; d
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Check for API key at the start
+  if (!process.env.OPENAI_API_KEY) {
+    console.error('OPENAI_API_KEY is not set')
+    return res.status(500).json({
+      error: 'Server configuration error',
+      message: 'OpenAI API key is not configured. Please set OPENAI_API_KEY environment variable.',
+    })
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
@@ -253,6 +274,7 @@ Identify 3-5 biases and generate 5-8 challenging ideas.`
       ]
     }
 
+    const openai = getOpenAIClient()
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o',
       messages: [
@@ -290,13 +312,40 @@ Identify 3-5 biases and generate 5-8 challenging ideas.`
   } catch (error) {
     console.error('OpenAI API error:', error)
     
-    // Don't expose internal error details in production
-    const isDevelopment = process.env.NODE_ENV === 'development'
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    // Check for common errors
+    let errorMessage = 'Unknown error'
+    let statusCode = 500
     
-    return res.status(500).json({
+    if (error instanceof Error) {
+      errorMessage = error.message
+      
+      // Check for missing API key
+      if (errorMessage.includes('API key') || !process.env.OPENAI_API_KEY) {
+        errorMessage = 'OpenAI API key is missing. Please set OPENAI_API_KEY environment variable.'
+        statusCode = 500
+      }
+      // Check for invalid API key
+      else if (errorMessage.includes('401') || errorMessage.includes('Unauthorized')) {
+        errorMessage = 'Invalid OpenAI API key. Please check your OPENAI_API_KEY.'
+        statusCode = 401
+      }
+      // Check for rate limiting
+      else if (errorMessage.includes('429') || errorMessage.includes('rate limit')) {
+        errorMessage = 'Rate limit exceeded. Please try again later.'
+        statusCode = 429
+      }
+    }
+    
+    // Always show error details in development, or if it's a known error
+    const isDevelopment = process.env.NODE_ENV === 'development' || process.env.VERCEL_ENV === 'development'
+    
+    return res.status(statusCode).json({
       error: 'Failed to process request',
-      ...(isDevelopment && { details: errorMessage }),
+      message: errorMessage,
+      ...(isDevelopment && { 
+        details: error instanceof Error ? error.stack : String(error),
+        hasApiKey: !!process.env.OPENAI_API_KEY 
+      }),
     })
   }
 }
