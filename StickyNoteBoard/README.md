@@ -1,4 +1,5 @@
 Chat GPT log: https://chatgpt.com/share/692f6a8f-cc48-8012-b873-0d9aa398f187
+
 # Sticky Notes Board
 
 A real-time collaborative infinite canvas for sticky notes built with React, TypeScript, Vite, and Firebase.
@@ -143,9 +144,18 @@ stickynoteboard/
 │   │   └── RemoteCursorsLayer.tsx
 │   ├── config/          # Firebase configuration
 │   ├── hooks/           # Custom React hooks
+│   ├── services/        # Business logic services
+│   ├── context/         # React context providers
 │   ├── utils/           # Utility functions
+│   ├── test/            # Test utilities and mocks
 │   ├── types.ts         # TypeScript types
 │   └── App.tsx          # Main app component
+├── docs/                # Documentation files
+│   ├── FIREBASE_SETUP.md
+│   ├── SECURITY_FIX.md
+│   ├── ROTATE_API_KEY.md
+│   ├── TEST_SUITE_SUMMARY.md
+│   └── ...              # Other documentation
 ├── .env.local           # Environment variables (gitignored)
 ├── .env.example         # Environment variables template
 └── firebase.json        # Firebase hosting config
@@ -164,11 +174,13 @@ stickynoteboard/
 ### Deploy to Firebase Hosting
 
 1. Install Firebase CLI (if not already installed):
+
    ```bash
    npm install -g firebase-tools
    ```
 
 2. Login to Firebase:
+
    ```bash
    firebase login
    ```
@@ -179,6 +191,7 @@ stickynoteboard/
    ```
 
 Your app will be live at:
+
 - `https://stickynoteboard.web.app`
 - `https://stickynoteboard.firebaseapp.com`
 
@@ -193,7 +206,7 @@ The app uses environment variables for Firebase configuration. See `.env.example
 - Firebase API keys are stored in environment variables
 - `.env.local` is gitignored
 - For production, restrict your API keys in Google Cloud Console
-- See `SECURITY_FIX.md` and `ROTATE_API_KEY.md` for security best practices
+- See `docs/SECURITY_FIX.md` and `docs/ROTATE_API_KEY.md` for security best practices
 
 ## Fallback Mode
 
@@ -202,6 +215,19 @@ If Firebase is not configured, the app falls back to `localStorage` for single-u
 ## License
 
 MIT
+
+## Documentation
+
+Additional documentation is available in the `docs/` folder:
+
+- **FIREBASE_SETUP.md** - Detailed Firebase setup instructions
+- **SECURITY_FIX.md** - Security best practices and fixes
+- **ROTATE_API_KEY.md** - How to rotate Firebase API keys
+- **TEST_SUITE_SUMMARY.md** - Test suite overview and coverage
+- **VIOLATION_FOR_REFACTOR.md** - Design principle violations and refactoring notes
+- **REFACTORING_SUMMARY.md** - Summary of refactoring work completed
+- **ERROR_HANDLING_REFACTOR.md** - Error handling improvements
+- **STATE_MANAGEMENT_REFACTOR.md** - State management architecture
 
 ## Contributing
 
