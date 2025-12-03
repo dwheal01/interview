@@ -3,6 +3,7 @@ import { useSession } from '../../context/SessionContext'
 import { ChatMessageList } from '../chat/ChatMessageList'
 import { parseModelOutput, extractSummary } from '../../utils/parseModelOutput'
 import { createChatMessage } from '../../utils/messageUtils'
+import { useAbortController } from '../../hooks/useAbortController'
 
 export function Tab1DefineExperience() {
   const {
@@ -18,6 +19,7 @@ export function Tab1DefineExperience() {
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const hasInitializedRef = useRef<string>('')
+  const { createAbortSignal, isAborted } = useAbortController()
 
   const sendMessage = async (userMessage: string, forceSummary = false) => {
     if (!experience.trim()) {
@@ -25,6 +27,7 @@ export function Tab1DefineExperience() {
       return
     }
 
+    const signal = createAbortSignal()
     setIsLoading(true)
     const newUserMessage = createChatMessage('user', userMessage)
     const updatedHistory = [...tab1History, newUserMessage]
@@ -40,6 +43,7 @@ export function Tab1DefineExperience() {
           history: updatedHistory,
           forceSummary,
         }),
+        signal,
       })
 
       if (!response.ok) {
@@ -60,11 +64,18 @@ export function Tab1DefineExperience() {
         setIsFinishedTab1(true)
       }
     } catch (error) {
+      // Don't show error for aborted requests
+      if (error instanceof Error && error.name === 'AbortError') {
+        return
+      }
       console.error('Error:', error)
       alert('Failed to send message. Please try again.')
     } finally {
-      setIsLoading(false)
-      setInput('')
+      // Only reset loading if this request wasn't aborted
+      if (!isAborted(signal)) {
+        setIsLoading(false)
+        setInput('')
+      }
     }
   }
 
@@ -87,6 +98,7 @@ export function Tab1DefineExperience() {
       hasInitializedRef.current = currentExperience
       // Send initial request to get first question
       const startConversation = async () => {
+        const signal = createAbortSignal()
         setIsLoading(true)
         try {
           const response = await fetch('/api/chat', {
@@ -98,6 +110,7 @@ export function Tab1DefineExperience() {
               history: [],
               forceSummary: false,
             }),
+            signal,
           })
 
           if (!response.ok) {
@@ -118,16 +131,23 @@ export function Tab1DefineExperience() {
             setIsFinishedTab1(true)
           }
         } catch (error) {
+          // Don't show error for aborted requests
+          if (error instanceof Error && error.name === 'AbortError') {
+            return
+          }
           console.error('Error starting conversation:', error)
           alert('Failed to start conversation. Please try again.')
         } finally {
-          setIsLoading(false)
+          // Only reset loading if this request wasn't aborted
+          if (!isAborted(signal)) {
+            setIsLoading(false)
+          }
         }
       }
 
       startConversation()
     }
-  }, [experience, tab1History.length, tab1Summary, isLoading, setTab1History, setTab1Summary, setIsFinishedTab1])
+  }, [experience, tab1History.length, tab1Summary, isLoading, setTab1History, setTab1Summary, setIsFinishedTab1, createAbortSignal, isAborted])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()

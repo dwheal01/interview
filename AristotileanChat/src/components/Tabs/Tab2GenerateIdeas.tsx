@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useSession } from '../../context/SessionContext'
 import { parseModelOutput, extractSuggestedIdeas } from '../../utils/parseModelOutput'
+import { useAbortController } from '../../hooks/useAbortController'
 
 export function Tab2GenerateIdeas() {
   const {
@@ -14,6 +15,7 @@ export function Tab2GenerateIdeas() {
 
   const [isLoading, setIsLoading] = useState(false)
   const [newIdeaInput, setNewIdeaInput] = useState('')
+  const { createAbortSignal, isAborted } = useAbortController()
 
   const handleAddMyIdea = () => {
     if (newIdeaInput.trim() && !myIdeas.includes(newIdeaInput.trim())) {
@@ -38,6 +40,7 @@ export function Tab2GenerateIdeas() {
       return
     }
 
+    const signal = createAbortSignal()
     setIsLoading(true)
     try {
       const response = await fetch('/api/chat', {
@@ -49,6 +52,7 @@ export function Tab2GenerateIdeas() {
           myIdeas,
           allSuggestedIdeas,
         }),
+        signal,
       })
 
       if (!response.ok) {
@@ -67,10 +71,17 @@ export function Tab2GenerateIdeas() {
         setAllSuggestedIdeas([...allSuggestedIdeas, ...uniqueNewIdeas])
       }
     } catch (error) {
+      // Don't show error for aborted requests
+      if (error instanceof Error && error.name === 'AbortError') {
+        return
+      }
       console.error('Error:', error)
       alert('Failed to generate ideas. Please try again.')
     } finally {
-      setIsLoading(false)
+      // Only reset loading if this request wasn't aborted
+      if (!isAborted(signal)) {
+        setIsLoading(false)
+      }
     }
   }
 

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useSession } from '../../context/SessionContext'
 import { parseModelOutput, extractBiases, extractChallengingIdeas } from '../../utils/parseModelOutput'
+import { useAbortController } from '../../hooks/useAbortController'
 
 export function Tab3ChallengeBiases() {
   const {
@@ -13,6 +14,7 @@ export function Tab3ChallengeBiases() {
   const [biases, setBiases] = useState<string[]>([])
   const [challengingIdeas, setChallengingIdeas] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const { createAbortSignal, isAborted } = useAbortController()
 
   const handleAnalyze = useCallback(async () => {
     if (!tab1Summary) {
@@ -20,6 +22,7 @@ export function Tab3ChallengeBiases() {
       return
     }
 
+    const signal = createAbortSignal()
     setIsLoading(true)
     try {
       const response = await fetch('/api/chat', {
@@ -31,6 +34,7 @@ export function Tab3ChallengeBiases() {
           myIdeas,
           allSuggestedIdeas,
         }),
+        signal,
       })
 
       if (!response.ok) {
@@ -50,12 +54,19 @@ export function Tab3ChallengeBiases() {
         setChallengingIdeas(extractedChallengingIdeas)
       }
     } catch (error) {
+      // Don't show error for aborted requests
+      if (error instanceof Error && error.name === 'AbortError') {
+        return
+      }
       console.error('Error:', error)
       alert('Failed to analyze biases. Please try again.')
     } finally {
-      setIsLoading(false)
+      // Only reset loading if this request wasn't aborted
+      if (!isAborted(signal)) {
+        setIsLoading(false)
+      }
     }
-  }, [tab1Summary, experience, myIdeas, allSuggestedIdeas])
+  }, [tab1Summary, experience, myIdeas, allSuggestedIdeas, createAbortSignal, isAborted])
 
   // Auto-analyze when tab is accessed if we have data
   useEffect(() => {
