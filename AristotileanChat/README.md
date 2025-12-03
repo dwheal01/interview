@@ -1,73 +1,116 @@
-# React + TypeScript + Vite
+# AristotileanChat
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A guided human experience brainstorming chatbot built with Vite + React + TypeScript + TailwindCSS and Vercel Serverless Functions.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Tab 1: Define Experience** - Multi-turn Q&A to understand what a human experience means to the user
+- **Tab 2: Generate Ideas** - Expand user-provided ideas with AI suggestions using a chip system
+- **Tab 3: Challenge Biases** - Identify biases in thinking and generate ideas that challenge them
 
-## React Compiler
+## Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Frontend**: Vite + React 19 + TypeScript + TailwindCSS
+- **Backend**: Vercel Serverless Functions
+- **AI**: OpenAI GPT-4o API
 
-## Expanding the ESLint configuration
+## Getting Started
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Prerequisites
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- Node.js 20+ 
+- npm or yarn
+- OpenAI API key
+- Vercel account (for deployment)
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### Local Development
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+1. **Install dependencies**:
+   ```bash
+   npm install
+   ```
+
+2. **Set up environment variables**:
+   Create a `.env.local` file in the root directory:
+   ```
+   OPENAI_API_KEY=your_openai_api_key_here
+   ```
+
+3. **Run Vercel dev server** (for API functions):
+   ```bash
+   npx vercel dev
+   ```
+   
+   This will start both the Vite dev server and the serverless functions locally.
+
+4. **Or run Vite dev server only** (for frontend-only development):
+   ```bash
+   npm run dev
+   ```
+   
+   Note: API calls will fail in this mode unless you have a separate backend running.
+
+### Building for Production
+
+```bash
+npm run build
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+The build output will be in the `dist/` directory.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Deployment to Vercel
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+1. **Push your code to GitHub**
+
+2. **Connect to Vercel**:
+   - Go to [vercel.com](https://vercel.com)
+   - Import your GitHub repository
+   - Vercel will auto-detect the Vite configuration
+
+3. **Add Environment Variable**:
+   - In your Vercel project settings, add:
+     - `OPENAI_API_KEY` = your OpenAI API key
+
+4. **Deploy**:
+   - Vercel will automatically deploy on every push to main
+   - The `/api/chat.ts` file will be automatically deployed as a serverless function
+
+## Project Structure
+
 ```
+AristotileanChat/
+├── api/
+│   └── chat.ts              # Vercel serverless function
+├── src/
+│   ├── App.tsx              # Main app component with tab navigation
+│   ├── main.tsx             # Entry point
+│   ├── index.css            # Global styles with TailwindCSS
+│   ├── context/
+│   │   └── SessionContext.tsx  # Global state management
+│   ├── components/
+│   │   ├── ExperienceInput.tsx
+│   │   ├── Tabs/
+│   │   │   ├── Tab1DefineExperience.tsx
+│   │   │   ├── Tab2GenerateIdeas.tsx
+│   │   │   └── Tab3ChallengeBiases.tsx
+│   │   └── chat/
+│   │       ├── ChatMessageList.tsx
+│   │       └── MessageBubble.tsx
+│   └── utils/
+│       └── parseModelOutput.ts   # JSON marker extraction helpers
+└── vercel.json              # Vercel configuration
+```
+
+## How It Works
+
+1. **Tab 1**: User enters an experience (e.g., "finding peace"). The AI asks questions one at a time to understand what this means to them. When ready, it produces a summary.
+
+2. **Tab 2**: User can add their own ideas and click "Generate More Ideas" to get AI suggestions. Ideas are displayed as chips that can be clicked to add to the user's list.
+
+3. **Tab 3**: After generating ideas, the AI analyzes potential biases in the user's thinking and suggests ideas that challenge those biases.
+
+All AI responses use hybrid JSON markers embedded in markdown code blocks for structured data extraction while maintaining natural language flow.
+
+## License
+
+MIT
