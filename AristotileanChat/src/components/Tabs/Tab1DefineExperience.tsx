@@ -19,6 +19,7 @@ export function Tab1DefineExperience() {
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const hasInitializedRef = useRef<string>('')
+  const inputRef = useRef<HTMLInputElement>(null)
   const { createAbortSignal, isAborted } = useAbortController()
 
   const sendMessage = async (userMessage: string, forceSummary = false) => {
@@ -94,6 +95,10 @@ export function Tab1DefineExperience() {
       if (!isAborted(signal)) {
         setIsLoading(false)
         setInput('')
+        // Refocus input after message is sent
+        setTimeout(() => {
+          inputRef.current?.focus()
+        }, 0)
       }
     }
   }
@@ -218,6 +223,15 @@ export function Tab1DefineExperience() {
   const conversationStarted = tab1History.length > 0
   const inputDisabled = isLoading || isFinishedTab1 || !hasExperience || !conversationStarted
 
+  // Auto-focus input when it becomes enabled
+  useEffect(() => {
+    if (!inputDisabled && !isLoading && conversationStarted) {
+      setTimeout(() => {
+        inputRef.current?.focus()
+      }, 0)
+    }
+  }, [inputDisabled, isLoading, conversationStarted])
+
   return (
     <div className="flex flex-col h-full relative bg-transparent">
       {/* Scrollable content area with padding for fixed input */}
@@ -248,6 +262,7 @@ export function Tab1DefineExperience() {
       <div className="fixed bottom-0 left-0 right-0 border-t border-gray-700 bg-gray-800 p-4 z-40">
         <form onSubmit={handleSubmit} className="max-w-4xl mx-auto flex gap-2">
           <input
+            ref={inputRef}
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
