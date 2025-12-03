@@ -219,29 +219,33 @@ export function Tab1DefineExperience() {
   const inputDisabled = isLoading || isFinishedTab1 || !hasExperience || !conversationStarted
 
   return (
-    <div className="flex flex-col h-full bg-gray-800">
-      <div className="flex-1 overflow-hidden">
+    <div className="flex flex-col h-full relative bg-transparent">
+      {/* Scrollable content area with padding for fixed input */}
+      <div className="flex-1 overflow-y-auto pb-32">
         {showPlaceholder ? (
-          <div className="flex items-center justify-center h-full">
-            <p className="text-gray-400 text-lg">Enter a human experience above to begin.</p>
+          <div className="flex items-center justify-center min-h-[calc(100vh-200px-80px)]">
+            <p className="text-blue-400 text-lg">Enter a human experience above to begin.</p>
           </div>
         ) : (
-          <ChatMessageList messages={tab1History} isStreaming={isLoading} />
+          <>
+            <ChatMessageList messages={tab1History} isStreaming={isLoading} />
+            
+            {tab1Summary && (
+              <div className="border-t border-gray-700 p-4 bg-gray-750">
+                <div className="max-w-4xl mx-auto">
+                  <h3 className="text-lg font-semibold text-gray-200 mb-2">Summary</h3>
+                  <div className="bg-gray-700 rounded-lg p-4 text-gray-100">
+                    <p className="whitespace-pre-wrap">{tab1Summary}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 
-      {tab1Summary && (
-        <div className="border-t border-gray-700 p-4 bg-gray-750">
-          <div className="max-w-4xl mx-auto">
-            <h3 className="text-lg font-semibold text-gray-200 mb-2">Summary</h3>
-            <div className="bg-gray-700 rounded-lg p-4 text-gray-100">
-              <p className="whitespace-pre-wrap">{tab1Summary}</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div className="border-t border-gray-700 p-4 bg-gray-800">
+      {/* Fixed input at bottom */}
+      <div className="fixed bottom-0 left-0 right-0 border-t border-gray-700 bg-gray-800 p-4 z-40">
         <form onSubmit={handleSubmit} className="max-w-4xl mx-auto flex gap-2">
           <input
             type="text"
