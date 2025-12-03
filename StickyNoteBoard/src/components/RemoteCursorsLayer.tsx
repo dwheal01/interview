@@ -1,3 +1,4 @@
+import { useMemo, memo } from 'react';
 import type { CursorDoc } from '../types';
 import type { CanvasTransform } from '../types';
 import { CURSOR_TIMEOUT_MS, CURSOR_SIZE, CURSOR_LABEL_MARGIN_LEFT, CURSOR_LABEL_MARGIN_TOP, CURSOR_LABEL_FONT_SIZE } from '../constants';
@@ -7,11 +8,14 @@ type RemoteCursorsLayerProps = {
   canvas?: CanvasTransform; // Not used but kept for potential future use
 };
 
-export function RemoteCursorsLayer({ cursors }: RemoteCursorsLayerProps) {
-  const now = Date.now();
-  const activeCursors = cursors.filter(
-    cursor => now - cursor.lastMovedAt < CURSOR_TIMEOUT_MS
-  );
+function RemoteCursorsLayerComponent({ cursors }: RemoteCursorsLayerProps) {
+  // Memoize filtered cursors to avoid recalculating on every render
+  const activeCursors = useMemo(() => {
+    const now = Date.now();
+    return cursors.filter(
+      cursor => now - cursor.lastMovedAt < CURSOR_TIMEOUT_MS
+    );
+  }, [cursors]);
 
   return (
     <>
@@ -49,4 +53,7 @@ export function RemoteCursorsLayer({ cursors }: RemoteCursorsLayerProps) {
     </>
   );
 }
+
+// Memoize RemoteCursorsLayer to prevent unnecessary re-renders
+export const RemoteCursorsLayer = memo(RemoteCursorsLayerComponent);
 

@@ -1,3 +1,4 @@
+import { memo, useMemo } from 'react';
 import type { NoteColor } from '../types';
 import { NOTE_COLORS } from '../types';
 
@@ -9,14 +10,15 @@ type ToolbarProps = {
   onEnterAddMode: () => void;
 };
 
-export function Toolbar({
+function ToolbarComponent({
   activeColor,
   onColorChange,
   zoomPercent,
   onResetView,
   onEnterAddMode,
 }: ToolbarProps) {
-  const colors = NOTE_COLORS;
+  // Memoize colors array (though it's already a constant, this ensures referential equality)
+  const colors = useMemo(() => NOTE_COLORS, []);
 
   return (
     <div 
@@ -70,4 +72,7 @@ export function Toolbar({
     </div>
   );
 }
+
+// Memoize Toolbar to prevent unnecessary re-renders
+export const Toolbar = memo(ToolbarComponent);
 

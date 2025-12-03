@@ -1,3 +1,4 @@
+import { useMemo, memo } from 'react';
 import type { PresenceDoc } from '../types';
 
 type PresenceBarProps = {
@@ -7,11 +8,14 @@ type PresenceBarProps = {
 
 const PRESENCE_TIMEOUT_MS = 30_000;
 
-export function PresenceBar({ users, localUserId }: PresenceBarProps) {
-  const now = Date.now();
-  const onlineUsers = users.filter(
-    user => now - user.lastSeen < PRESENCE_TIMEOUT_MS
-  );
+function PresenceBarComponent({ users, localUserId }: PresenceBarProps) {
+  // Memoize filtered users to avoid recalculating on every render
+  const onlineUsers = useMemo(() => {
+    const now = Date.now();
+    return users.filter(
+      user => now - user.lastSeen < PRESENCE_TIMEOUT_MS
+    );
+  }, [users]);
 
   return (
     <div className="fixed top-16 right-4 flex -space-x-2 z-40">
@@ -30,4 +34,7 @@ export function PresenceBar({ users, localUserId }: PresenceBarProps) {
     </div>
   );
 }
+
+// Memoize PresenceBar to prevent unnecessary re-renders
+export const PresenceBar = memo(PresenceBarComponent);
 

@@ -62,14 +62,17 @@ function AppContent() {
   // Prevent browser zoom shortcuts
   useBrowserZoomPrevention();
 
-  // Event handlers
+  // Event handlers - memoized to prevent StickyBoard re-renders
+  // Extract individual operations to ensure stable references
+  const { onPlaceNote, onSelectNote, onBeginDragNote, onDragNote, onEndDragNote, onUpdateNote, onStartEdit, onStopEdit } = noteOperations;
+  
   const handleCanvasClick = useCallback(
     (canvasX: number, canvasY: number) => {
       if (mode === 'adding') {
-        noteOperations.onPlaceNote(canvasX, canvasY);
+        onPlaceNote(canvasX, canvasY);
       }
     },
-    [mode, noteOperations]
+    [mode, onPlaceNote]
   );
 
   const handleResetView = useCallback(() => {
@@ -78,19 +81,19 @@ function AppContent() {
 
   const handleSelectNote = useCallback(
     (id: string | null) => {
-      noteOperations.onSelectNote(id);
+      onSelectNote(id);
       if (mode === 'adding') {
         exitAddMode();
       }
     },
-    [mode, exitAddMode, noteOperations]
+    [mode, exitAddMode, onSelectNote]
   );
 
   const handleEndDragNote = useCallback(
     async (id: string) => {
-      await noteOperations.onEndDragNote(id, isOverTrash);
+      await onEndDragNote(id, isOverTrash);
     },
-    [isOverTrash, noteOperations]
+    [isOverTrash, onEndDragNote]
   );
 
   // Memoized zoom percent
@@ -124,14 +127,14 @@ function AppContent() {
         cursors={cursors}
         onCanvasClick={handleCanvasClick}
         onSelectNote={handleSelectNote}
-        onBeginDragNote={noteOperations.onBeginDragNote}
-        onDragNote={noteOperations.onDragNote}
+        onBeginDragNote={onBeginDragNote}
+        onDragNote={onDragNote}
         onEndDragNote={handleEndDragNote}
         onPan={onPan}
         onZoom={onZoom}
-        onUpdateNote={noteOperations.onUpdateNote}
-        onStartEdit={noteOperations.onStartEdit}
-        onStopEdit={noteOperations.onStopEdit}
+        onUpdateNote={onUpdateNote}
+        onStartEdit={onStartEdit}
+        onStopEdit={onStopEdit}
         setIsOverTrash={setIsOverTrash}
         onCursorMove={handleCursorMove}
       />

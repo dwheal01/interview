@@ -1,14 +1,14 @@
-import { useState } from 'react';
+import { useState, useCallback, memo } from 'react';
 
 type UsernameModalProps = {
   onJoin: (username: string) => void;
 };
 
-export function UsernameModal({ onJoin }: UsernameModalProps) {
+function UsernameModalComponent({ onJoin }: UsernameModalProps) {
   const [username, setUsername] = useState('');
   const [error, setError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = username.trim();
     if (!trimmed) {
@@ -16,7 +16,12 @@ export function UsernameModal({ onJoin }: UsernameModalProps) {
       return;
     }
     onJoin(trimmed);
-  };
+  }, [username, onJoin]);
+
+  const handleUsernameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setUsername(e.target.value);
+    setError('');
+  }, []);
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -29,10 +34,7 @@ export function UsernameModal({ onJoin }: UsernameModalProps) {
           <input
             type="text"
             value={username}
-            onChange={(e) => {
-              setUsername(e.target.value);
-              setError('');
-            }}
+            onChange={handleUsernameChange}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2"
             placeholder="Your username"
             autoFocus
@@ -51,4 +53,7 @@ export function UsernameModal({ onJoin }: UsernameModalProps) {
     </div>
   );
 }
+
+// Memoize UsernameModal to prevent unnecessary re-renders
+export const UsernameModal = memo(UsernameModalComponent);
 

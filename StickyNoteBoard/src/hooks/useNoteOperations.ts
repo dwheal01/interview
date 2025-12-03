@@ -99,7 +99,7 @@ export function useNoteOperations({
       setSelectedNoteId(id);
       // Exit add mode if selecting a note (handled by parent checking mode)
     },
-    []
+    [setSelectedNoteId]
   );
 
   const onStartEdit = useCallback(
@@ -187,7 +187,7 @@ export function useNoteOperations({
       setMode('idle');
       setDraggingNoteId(null);
     },
-    [selectedNoteId, setIsOverTrash, setMode, setDraggingNoteId, showError]
+    [selectedNoteId, setSelectedNoteId, setIsOverTrash, setMode, setDraggingNoteId, showError]
   );
 
   return {
