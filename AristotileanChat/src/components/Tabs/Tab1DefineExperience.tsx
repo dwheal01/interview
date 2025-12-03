@@ -133,7 +133,7 @@ export function Tab1DefineExperience() {
 
       startConversation()
     }
-  }, [experience, tab1History.length, tab1Summary, isLoading])
+  }, [experience, tab1History.length, tab1Summary, isLoading, setTab1History, setTab1Summary, setIsFinishedTab1])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
