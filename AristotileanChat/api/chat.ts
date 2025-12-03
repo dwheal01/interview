@@ -19,12 +19,149 @@ type ChatRequest = {
   allSuggestedIdeas?: string[]
 }
 
+const VALID_MODES = ['define-experience', 'generate-ideas', 'challenge-biases'] as const
+const MAX_EXPERIENCE_LENGTH = 500
+const MAX_HISTORY_LENGTH = 100
+const MAX_IDEAS_LENGTH = 100
+
+function validateChatRequest(body: unknown): { valid: boolean; error?: string; data?: ChatRequest } {
+  // Check if body exists
+  if (!body || typeof body !== 'object') {
+    return { valid: false, error: 'Request body is required' }
+  }
+
+  const req = body as Record<string, unknown>
+
+  // Validate mode
+  if (!req.mode || typeof req.mode !== 'string') {
+    return { valid: false, error: 'Mode is required and must be a string' }
+  }
+  if (!VALID_MODES.includes(req.mode as typeof VALID_MODES[number])) {
+    return {
+      valid: false,
+      error: `Mode must be one of: ${VALID_MODES.join(', ')}`,
+    }
+  }
+
+  // Validate experience
+  if (!req.experience || typeof req.experience !== 'string') {
+    return { valid: false, error: 'Experience is required and must be a string' }
+  }
+  const experience = req.experience.trim()
+  if (experience.length === 0) {
+    return { valid: false, error: 'Experience cannot be empty' }
+  }
+  if (experience.length > MAX_EXPERIENCE_LENGTH) {
+    return {
+      valid: false,
+      error: `Experience must be ${MAX_EXPERIENCE_LENGTH} characters or less`,
+    }
+  }
+
+  // Validate history if provided
+  if (req.history !== undefined) {
+    if (!Array.isArray(req.history)) {
+      return { valid: false, error: 'History must be an array' }
+    }
+    if (req.history.length > MAX_HISTORY_LENGTH) {
+      return {
+        valid: false,
+        error: `History cannot exceed ${MAX_HISTORY_LENGTH} messages`,
+      }
+    }
+    for (let i = 0; i < req.history.length; i++) {
+      const msg = req.history[i]
+      if (!msg || typeof msg !== 'object') {
+        return { valid: false, error: `History message ${i} is invalid` }
+      }
+      const message = msg as Record<string, unknown>
+      if (message.role !== 'user' && message.role !== 'assistant') {
+        return {
+          valid: false,
+          error: `History message ${i} must have role 'user' or 'assistant'`,
+        }
+      }
+      if (!message.content || typeof message.content !== 'string') {
+        return {
+          valid: false,
+          error: `History message ${i} must have a string content field`,
+        }
+      }
+    }
+  }
+
+  // Validate forceSummary if provided
+  if (req.forceSummary !== undefined && typeof req.forceSummary !== 'boolean') {
+    return { valid: false, error: 'forceSummary must be a boolean' }
+  }
+
+  // Validate myIdeas if provided
+  if (req.myIdeas !== undefined) {
+    if (!Array.isArray(req.myIdeas)) {
+      return { valid: false, error: 'myIdeas must be an array' }
+    }
+    if (req.myIdeas.length > MAX_IDEAS_LENGTH) {
+      return {
+        valid: false,
+        error: `myIdeas cannot exceed ${MAX_IDEAS_LENGTH} items`,
+      }
+    }
+    for (let i = 0; i < req.myIdeas.length; i++) {
+      if (typeof req.myIdeas[i] !== 'string') {
+        return { valid: false, error: `myIdeas[${i}] must be a string` }
+      }
+    }
+  }
+
+  // Validate allSuggestedIdeas if provided
+  if (req.allSuggestedIdeas !== undefined) {
+    if (!Array.isArray(req.allSuggestedIdeas)) {
+      return { valid: false, error: 'allSuggestedIdeas must be an array' }
+    }
+    if (req.allSuggestedIdeas.length > MAX_IDEAS_LENGTH) {
+      return {
+        valid: false,
+        error: `allSuggestedIdeas cannot exceed ${MAX_IDEAS_LENGTH} items`,
+      }
+    }
+    for (let i = 0; i < req.allSuggestedIdeas.length; i++) {
+      if (typeof req.allSuggestedIdeas[i] !== 'string') {
+        return {
+          valid: false,
+          error: `allSuggestedIdeas[${i}] must be a string`,
+        }
+      }
+    }
+  }
+
+  return {
+    valid: true,
+    data: {
+      mode: req.mode as ChatRequest['mode'],
+      experience,
+      history: req.history as ChatMessage[] | undefined,
+      forceSummary: req.forceSummary as boolean | undefined,
+      myIdeas: req.myIdeas as string[] | undefined,
+      allSuggestedIdeas: req.allSuggestedIdeas as string[] | undefined,
+    },
+  }
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const body: ChatRequest = req.body
+  // Validate request body
+  const validation = validateChatRequest(req.body)
+  if (!validation.valid) {
+    return res.status(400).json({
+      error: 'Invalid request',
+      message: validation.error,
+    })
+  }
+
+  const body = validation.data!
 
   try {
     let systemPrompt = ''
@@ -152,9 +289,14 @@ Identify 3-5 biases and generate 5-8 challenging ideas.`
     }
   } catch (error) {
     console.error('OpenAI API error:', error)
+    
+    // Don't expose internal error details in production
+    const isDevelopment = process.env.NODE_ENV === 'development'
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    
     return res.status(500).json({
       error: 'Failed to process request',
-      details: error instanceof Error ? error.message : 'Unknown error',
+      ...(isDevelopment && { details: errorMessage }),
     })
   }
 }
