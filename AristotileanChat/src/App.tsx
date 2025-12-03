@@ -20,7 +20,7 @@ function AppContent() {
           <h1 className="text-2xl font-bold text-gray-100 mb-4">
             Aristotilean<span className="text-blue-400">Chat</span>
           </h1>
-          <ExperienceInput />
+          <ExperienceInput onExperienceSubmitted={() => setActiveTab('tab1')} />
         </div>
       </header>
 

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSession } from '../../context/SessionContext'
 import type { ChatMessage } from '../../context/SessionContext'
 import { ChatMessageList } from '../chat/ChatMessageList'
@@ -17,6 +17,7 @@ export function Tab1DefineExperience() {
 
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const hasInitializedRef = useRef<string>('')
 
   const sendMessage = async (userMessage: string, forceSummary = false) => {
     if (!experience.trim()) {
@@ -70,23 +71,96 @@ export function Tab1DefineExperience() {
     }
   }
 
+  // Auto-start conversation when experience is submitted
+  useEffect(() => {
+    const currentExperience = experience.trim()
+    
+    // Reset initialization flag if experience changed
+    if (hasInitializedRef.current !== currentExperience && currentExperience) {
+      hasInitializedRef.current = ''
+    }
+    
+    if (
+      currentExperience &&
+      tab1History.length === 0 &&
+      tab1Summary === null &&
+      !isLoading &&
+      hasInitializedRef.current !== currentExperience
+    ) {
+      hasInitializedRef.current = currentExperience
+      // Send initial request to get first question
+      const startConversation = async () => {
+        setIsLoading(true)
+        try {
+          const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              mode: 'define-experience',
+              experience,
+              history: [],
+              forceSummary: false,
+            }),
+          })
+
+          if (!response.ok) {
+            throw new Error('Failed to get response')
+          }
+
+          const data = await response.json()
+          const { parsed, cleanText } = parseModelOutput(data.rawText)
+
+          const assistantMessage: ChatMessage = {
+            role: 'assistant',
+            content: cleanText || data.rawText,
+          }
+
+          setTab1History([assistantMessage])
+
+          // Check for summary (unlikely on first message, but handle it)
+          const summary = extractSummary(parsed)
+          if (summary) {
+            setTab1Summary(summary)
+            setIsFinishedTab1(true)
+          }
+        } catch (error) {
+          console.error('Error starting conversation:', error)
+          alert('Failed to start conversation. Please try again.')
+        } finally {
+          setIsLoading(false)
+        }
+      }
+
+      startConversation()
+    }
+  }, [experience, tab1History.length, tab1Summary, isLoading])
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (input.trim() && !isLoading) {
+    if (input.trim() && !isLoading && experience.trim()) {
       sendMessage(input.trim())
     }
   }
 
   const handleSummarize = () => {
-    if (!isLoading) {
+    if (!isLoading && experience.trim()) {
       sendMessage('', true)
     }
   }
 
+  const hasExperience = experience.trim() !== ''
+  const showPlaceholder = !hasExperience && tab1History.length === 0
+
   return (
     <div className="flex flex-col h-full bg-gray-800">
       <div className="flex-1 overflow-hidden">
-        <ChatMessageList messages={tab1History} isStreaming={isLoading} />
+        {showPlaceholder ? (
+          <div className="flex items-center justify-center h-full">
+            <p className="text-gray-400 text-lg">Enter a human experience above to begin.</p>
+          </div>
+        ) : (
+          <ChatMessageList messages={tab1History} isStreaming={isLoading} />
+        )}
       </div>
 
       {tab1Summary && (
@@ -107,21 +181,21 @@ export function Tab1DefineExperience() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Answer the question..."
-            disabled={isLoading || isFinishedTab1}
+            disabled={isLoading || isFinishedTab1 || !hasExperience}
             className="flex-1 px-4 py-2 bg-gray-700 text-gray-100 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
           />
           <button
             type="submit"
-            disabled={isLoading || !input.trim() || isFinishedTab1}
+            disabled={isLoading || !input.trim() || isFinishedTab1 || !hasExperience}
             className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
           >
             Send
           </button>
-          {!isFinishedTab1 && (
+          {!isFinishedTab1 && hasExperience && tab1History.length > 0 && (
             <button
               type="button"
               onClick={handleSummarize}
-              disabled={isLoading || tab1History.length === 0}
+              disabled={isLoading}
               className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
             >
               Summarize Now
@@ -132,4 +206,3 @@ export function Tab1DefineExperience() {
     </div>
   )
 }
-
