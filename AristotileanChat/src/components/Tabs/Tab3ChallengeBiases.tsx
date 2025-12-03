@@ -90,9 +90,9 @@ export function Tab3ChallengeBiases() {
             </p>
           ) : (
             <ul className="space-y-2">
-              {biases.map((bias, idx) => (
+              {biases.map((bias) => (
                 <li
-                  key={idx}
+                  key={bias}
                   className="px-4 py-3 bg-gray-600 rounded-lg text-gray-100"
                 >
                   {bias}
@@ -115,9 +115,9 @@ export function Tab3ChallengeBiases() {
             </p>
           ) : (
             <div className="flex flex-wrap gap-2">
-              {challengingIdeas.map((idea, idx) => (
+              {challengingIdeas.map((idea) => (
                 <div
-                  key={idx}
+                  key={idea}
                   className="px-4 py-2 bg-purple-600 text-white rounded-full text-sm"
                 >
                   {idea}

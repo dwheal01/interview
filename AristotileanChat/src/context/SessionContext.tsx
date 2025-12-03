@@ -2,6 +2,7 @@ import { createContext, useContext, useState } from 'react'
 import type { ReactNode, Dispatch, SetStateAction } from 'react'
 
 export type ChatMessage = {
+  id: string
   role: 'user' | 'assistant'
   content: string
 }

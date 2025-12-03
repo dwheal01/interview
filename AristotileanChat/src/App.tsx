@@ -21,7 +21,7 @@ function AppContent() {
             Aristotilean<span className="text-blue-400">Chat</span>
           </h1>
           <ExperienceInput onExperienceSubmitted={() => setActiveTab('tab1')} />
-        </div>
+      </div>
       </header>
 
       {/* Tabs Navigation */}
@@ -63,7 +63,7 @@ function AppContent() {
               }`}
             >
               Tab 3: Challenge Biases
-            </button>
+        </button>
           </nav>
         </div>
       </div>

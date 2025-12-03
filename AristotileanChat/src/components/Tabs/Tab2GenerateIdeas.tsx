@@ -102,9 +102,9 @@ export function Tab2GenerateIdeas() {
             {myIdeas.length === 0 ? (
               <p className="text-gray-400 text-sm">No ideas yet. Add some above!</p>
             ) : (
-              myIdeas.map((idea, idx) => (
+              myIdeas.map((idea) => (
                 <div
-                  key={idx}
+                  key={idea}
                   className="group relative inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-full"
                 >
                   <span className="text-sm">{idea}</span>
@@ -140,9 +140,9 @@ export function Tab2GenerateIdeas() {
                 Click "Generate More Ideas" to get suggestions!
               </p>
             ) : (
-              allSuggestedIdeas.map((idea, idx) => (
+              allSuggestedIdeas.map((idea) => (
                 <button
-                  key={idx}
+                  key={idea}
                   onClick={() => handleAddSuggestedIdea(idea)}
                   className="px-4 py-2 bg-gray-700 text-gray-100 rounded-full hover:bg-gray-600 transition text-sm"
                 >

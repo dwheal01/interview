@@ -16,7 +16,7 @@ export function ChatMessageList({ messages, isStreaming = false }: ChatMessageLi
       ) : (
         messages.map((message, idx) => (
           <MessageBubble
-            key={idx}
+            key={message.id}
             message={message}
             isStreaming={isStreaming && idx === messages.length - 1}
           />

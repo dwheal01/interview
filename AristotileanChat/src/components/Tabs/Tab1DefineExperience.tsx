@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { useSession } from '../../context/SessionContext'
-import type { ChatMessage } from '../../context/SessionContext'
 import { ChatMessageList } from '../chat/ChatMessageList'
 import { parseModelOutput, extractSummary } from '../../utils/parseModelOutput'
+import { createChatMessage } from '../../utils/messageUtils'
 
 export function Tab1DefineExperience() {
   const {
@@ -26,7 +26,7 @@ export function Tab1DefineExperience() {
     }
 
     setIsLoading(true)
-    const newUserMessage: ChatMessage = { role: 'user', content: userMessage }
+    const newUserMessage = createChatMessage('user', userMessage)
     const updatedHistory = [...tab1History, newUserMessage]
     setTab1History(updatedHistory)
 
@@ -49,10 +49,7 @@ export function Tab1DefineExperience() {
       const data = await response.json()
       const { parsed, cleanText } = parseModelOutput(data.rawText)
 
-      const assistantMessage: ChatMessage = {
-        role: 'assistant',
-        content: cleanText || data.rawText,
-      }
+      const assistantMessage = createChatMessage('assistant', cleanText || data.rawText)
 
       setTab1History([...updatedHistory, assistantMessage])
 
@@ -110,10 +107,7 @@ export function Tab1DefineExperience() {
           const data = await response.json()
           const { parsed, cleanText } = parseModelOutput(data.rawText)
 
-          const assistantMessage: ChatMessage = {
-            role: 'assistant',
-            content: cleanText || data.rawText,
-          }
+          const assistantMessage = createChatMessage('assistant', cleanText || data.rawText)
 
           setTab1History([assistantMessage])
 

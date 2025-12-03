@@ -72,7 +72,7 @@ export function MessageBubble({ message, isStreaming = false }: MessageBubblePro
           <div className="space-y-1">
             {displayedLines.map((line, idx) => (
               <p
-                key={idx}
+                key={`${line}-${idx}`}
                 className={`transition-opacity duration-300 ${
                   idx === displayedLines.length - 1 && !isComplete
                     ? 'opacity-70'
