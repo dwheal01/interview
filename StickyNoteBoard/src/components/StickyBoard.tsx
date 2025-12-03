@@ -4,6 +4,7 @@ import { NoteCard } from './NoteCard';
 import { RemoteCursorsLayer } from './RemoteCursorsLayer';
 import { ZOOM_IN_FACTOR, ZOOM_OUT_FACTOR, DRAG_THRESHOLD_PX, GRID_SIZE } from '../constants';
 import { checkTrashOverlap as checkTrashOverlapUtil } from '../utils/collisionDetection';
+import { screenToCanvas, getRelativeCoordinates } from '../utils/canvasUtils';
 
 type AppMode = "idle" | "adding" | "dragging" | "panning";
 
@@ -68,21 +69,11 @@ export function StickyBoard({
   } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
-  // Convert screen coordinates to canvas coordinates
-  const screenToCanvas = (clientX: number, clientY: number): { x: number; y: number } => {
+  // Convert screen coordinates to canvas coordinates using element-relative coordinates
+  const screenToCanvasLocal = (clientX: number, clientY: number): { x: number; y: number } => {
     if (!boardRef.current) return { x: 0, y: 0 };
     const rect = boardRef.current.getBoundingClientRect();
-    const relativeX = clientX - rect.left;
-    const relativeY = clientY - rect.top;
-    
-    // Account for the transform origin being at center
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-    
-    const canvasX = (relativeX - centerX - canvas.offsetX) / canvas.scale;
-    const canvasY = (relativeY - centerY - canvas.offsetY) / canvas.scale;
-    
-    return { x: canvasX, y: canvasY };
+    return screenToCanvas(clientX, clientY, canvas, undefined, undefined, rect);
   };
 
   // Check if note card overlaps with trash
@@ -110,8 +101,7 @@ export function StickyBoard({
       event.stopPropagation();
       if (!boardRef.current) return;
       const rect = boardRef.current.getBoundingClientRect();
-      const screenX = event.clientX - rect.left;
-      const screenY = event.clientY - rect.top;
+      const { x: screenX, y: screenY } = getRelativeCoordinates(event.clientX, event.clientY, rect);
       const zoomFactor = event.deltaY < 0 ? ZOOM_IN_FACTOR : ZOOM_OUT_FACTOR;
       onZoomRef.current(zoomFactor, screenX, screenY);
     };
@@ -138,7 +128,7 @@ export function StickyBoard({
       e.preventDefault();
     } else if (e.button === 0 && mode === "adding") {
       // Left mouse button in add mode
-      const canvasPos = screenToCanvas(e.clientX, e.clientY);
+      const canvasPos = screenToCanvasLocal(e.clientX, e.clientY);
       onCanvasClick(canvasPos.x, canvasPos.y);
     } else if (e.button === 0 && mode === "idle") {
       // Left click on empty canvas - deselect
@@ -150,15 +140,8 @@ export function StickyBoard({
     // Update cursor position
     if (boardRef.current) {
       const rect = boardRef.current.getBoundingClientRect();
-      const screenX = e.clientX - rect.left;
-      const screenY = e.clientY - rect.top;
-      const centerX = rect.width / 2;
-      const centerY = rect.height / 2;
-      
-      const canvasX = (screenX - centerX - canvas.offsetX) / canvas.scale;
-      const canvasY = (screenY - centerY - canvas.offsetY) / canvas.scale;
-      
-      onCursorMove(canvasX, canvasY);
+      const canvasPos = screenToCanvas(e.clientX, e.clientY, canvas, undefined, undefined, rect);
+      onCursorMove(canvasPos.x, canvasPos.y);
     }
 
     if (panStart) {
@@ -173,8 +156,7 @@ export function StickyBoard({
       // Dragging a note
       if (!boardRef.current) return;
       const rect = boardRef.current.getBoundingClientRect();
-      const screenX = e.clientX - rect.left;
-      const screenY = e.clientY - rect.top;
+      const { x: screenX, y: screenY } = getRelativeCoordinates(e.clientX, e.clientY, rect);
 
       const deltaScreenX = screenX - dragState.startMouseX;
       const deltaScreenY = screenY - dragState.startMouseY;
@@ -184,7 +166,7 @@ export function StickyBoard({
       if (distance > DRAG_THRESHOLD_PX) {
         if (!isDragging) {
           setIsDragging(true);
-          const canvasPos = screenToCanvas(e.clientX, e.clientY);
+          const canvasPos = screenToCanvasLocal(e.clientX, e.clientY);
           onBeginDragNote(dragState.noteId, canvasPos.x, canvasPos.y);
         }
 
@@ -234,10 +216,11 @@ export function StickyBoard({
       const rect = boardRef.current.getBoundingClientRect();
       const note = notes.find(n => n.id === noteId);
       if (note) {
+        const { x: startMouseX, y: startMouseY } = getRelativeCoordinates(e.clientX, e.clientY, rect);
         setDragState({
           noteId,
-          startMouseX: e.clientX - rect.left,
-          startMouseY: e.clientY - rect.top,
+          startMouseX,
+          startMouseY,
           startNoteX: note.x,
           startNoteY: note.y,
         });
