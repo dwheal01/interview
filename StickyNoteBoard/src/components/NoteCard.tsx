@@ -33,15 +33,47 @@ function NoteCardComponent({
 }: NoteCardProps) {
   const lockedByOther = useMemo(() => !!(lock && lock.userId !== localUserId), [lock, localUserId]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const titleInputRef = useRef<HTMLInputElement>(null);
+  const cursorPositionRef = useRef<{ title: number | null; content: number | null }>({ title: null, content: null });
 
-  // Auto-resize textarea based on content
+  // Auto-resize textarea based on content and restore cursor position
   useEffect(() => {
     const textarea = textareaRef.current;
     if (textarea) {
+      const cursorPos = cursorPositionRef.current.content;
+      
+      // Auto-resize
       textarea.style.height = 'auto';
       textarea.style.height = `${textarea.scrollHeight}px`;
+      
+      // Restore cursor position if it was set (after a user-initiated change)
+      if (cursorPos !== null && document.activeElement === textarea) {
+        // Use requestAnimationFrame to ensure DOM is updated
+        requestAnimationFrame(() => {
+          if (textarea && document.activeElement === textarea) {
+            const safePos = Math.min(cursorPos, textarea.value.length);
+            textarea.setSelectionRange(safePos, safePos);
+            cursorPositionRef.current.content = null;
+          }
+        });
+      }
     }
   }, [note.content]);
+
+  // Restore cursor position for title input
+  useEffect(() => {
+    const input = titleInputRef.current;
+    if (input && cursorPositionRef.current.title !== null && document.activeElement === input) {
+      // Use requestAnimationFrame to ensure DOM is updated
+      requestAnimationFrame(() => {
+        if (input && document.activeElement === input) {
+          const safePos = Math.min(cursorPositionRef.current.title!, input.value.length);
+          input.setSelectionRange(safePos, safePos);
+          cursorPositionRef.current.title = null;
+        }
+      });
+    }
+  }, [note.title]);
 
   const handleFocus = useCallback(() => {
     onStartEdit();
@@ -66,14 +98,25 @@ function NoteCardComponent({
   }, [lockedByOther, onMouseDown]);
 
   const handleTextareaChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    // Preserve cursor position before update
+    const cursorPos = e.target.selectionStart;
     onChange({ content: e.target.value });
+    
+    // Store cursor position to restore after re-render
+    cursorPositionRef.current.content = cursorPos;
+    
     // Auto-resize on change
     e.target.style.height = 'auto';
     e.target.style.height = `${e.target.scrollHeight}px`;
   }, [onChange]);
 
   const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    // Preserve cursor position before update
+    const cursorPos = e.target.selectionStart;
     onChange({ title: e.target.value });
+    
+    // Store cursor position to restore after re-render
+    cursorPositionRef.current.title = cursorPos;
   }, [onChange]);
 
   // Memoize style object
@@ -100,6 +143,7 @@ function NoteCardComponent({
       onMouseDown={handleMouseDown}
     >
       <input
+        ref={titleInputRef}
         className="note-card-input w-full border-none bg-transparent font-semibold text-xs mb-1 outline-none placeholder-gray-400"
         value={note.title}
         onChange={handleTitleChange}
