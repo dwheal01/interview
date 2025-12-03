@@ -164,6 +164,8 @@ export function Tab1DefineExperience() {
 
   const hasExperience = experience.trim() !== ''
   const showPlaceholder = !hasExperience && tab1History.length === 0
+  const conversationStarted = tab1History.length > 0
+  const inputDisabled = isLoading || isFinishedTab1 || !hasExperience || !conversationStarted
 
   return (
     <div className="flex flex-col h-full bg-gray-800">
@@ -195,17 +197,17 @@ export function Tab1DefineExperience() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Answer the question..."
-            disabled={isLoading || isFinishedTab1 || !hasExperience}
+            disabled={inputDisabled}
             className="flex-1 px-4 py-2 bg-gray-700 text-gray-100 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
           />
           <button
             type="submit"
-            disabled={isLoading || !input.trim() || isFinishedTab1 || !hasExperience}
+            disabled={inputDisabled || !input.trim()}
             className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
           >
             Send
           </button>
-          {!isFinishedTab1 && hasExperience && tab1History.length > 0 && (
+          {!isFinishedTab1 && hasExperience && conversationStarted && (
             <button
               type="button"
               onClick={handleSummarize}
