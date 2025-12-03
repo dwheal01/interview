@@ -86,13 +86,13 @@ export function Tab2GenerateIdeas() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-gray-800 p-6">
-      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 overflow-y-auto">
+    <div className="flex flex-col h-full bg-transparent">
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 px-6 py-6 overflow-hidden">
         {/* Left Column: User's Ideas */}
-        <div className="space-y-4">
+        <div className="flex flex-col space-y-4 min-h-0">
           <h2 className="text-xl font-semibold text-gray-200">Your Ideas</h2>
           
-          <div className="flex gap-2 mb-4">
+          <div className="flex gap-2">
             <input
               type="text"
               value={newIdeaInput}
@@ -109,31 +109,33 @@ export function Tab2GenerateIdeas() {
             </button>
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            {myIdeas.length === 0 ? (
-              <p className="text-gray-400 text-sm">No ideas yet. Add some above!</p>
-            ) : (
-              myIdeas.map((idea) => (
-                <div
-                  key={idea}
-                  className="group relative inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-full"
-                >
-                  <span className="text-sm">{idea}</span>
-                  <button
-                    onClick={() => handleRemoveMyIdea(idea)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity text-white hover:text-red-300"
-                    aria-label="Remove"
+          <div className="flex-1 overflow-y-auto min-h-0">
+            <div className="flex flex-wrap gap-2">
+              {myIdeas.length === 0 ? (
+                <p className="text-gray-400 text-sm">No ideas yet. Add some above!</p>
+              ) : (
+                myIdeas.map((idea) => (
+                  <div
+                    key={idea}
+                    className="group relative inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-full"
                   >
-                    ×
-                  </button>
-                </div>
-              ))
-            )}
+                    <span className="text-sm">{idea}</span>
+                    <button
+                      onClick={() => handleRemoveMyIdea(idea)}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity text-white hover:text-red-300"
+                      aria-label="Remove"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         </div>
 
         {/* Right Column: AI Suggested Ideas */}
-        <div className="space-y-4">
+        <div className="flex flex-col space-y-4 min-h-0">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-gray-200">AI Suggestions</h2>
             <button
@@ -141,26 +143,28 @@ export function Tab2GenerateIdeas() {
               disabled={isLoading || !tab1Summary}
               className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition text-sm"
             >
-              {isLoading ? 'Generating...' : 'Generate More Ideas'}
+              {isLoading ? 'Generating...' : 'Generate More'}
             </button>
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            {allSuggestedIdeas.length === 0 ? (
-              <p className="text-gray-400 text-sm">
-                Click "Generate More Ideas" to get suggestions!
-              </p>
-            ) : (
-              allSuggestedIdeas.map((idea) => (
-                <button
-                  key={idea}
-                  onClick={() => handleAddSuggestedIdea(idea)}
-                  className="px-4 py-2 bg-gray-700 text-gray-100 rounded-full hover:bg-gray-600 transition text-sm"
-                >
-                  + {idea}
-                </button>
-              ))
-            )}
+          <div className="flex-1 overflow-y-auto min-h-0">
+            <div className="flex flex-wrap gap-2">
+              {allSuggestedIdeas.length === 0 ? (
+                <p className="text-gray-400 text-sm">
+                  Click "Generate More" to get suggestions!
+                </p>
+              ) : (
+                allSuggestedIdeas.map((idea) => (
+                  <button
+                    key={idea}
+                    onClick={() => handleAddSuggestedIdea(idea)}
+                    className="px-4 py-2 bg-gray-700 text-gray-100 rounded-full hover:bg-gray-600 transition text-sm"
+                  >
+                    + {idea}
+                  </button>
+                ))
+              )}
+            </div>
           </div>
         </div>
       </div>

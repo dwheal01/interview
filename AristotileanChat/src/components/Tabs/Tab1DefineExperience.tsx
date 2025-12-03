@@ -19,7 +19,7 @@ export function Tab1DefineExperience() {
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const hasInitializedRef = useRef<string>('')
-  const inputRef = useRef<HTMLInputElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
   const { createAbortSignal, isAborted } = useAbortController()
 
   const sendMessage = async (userMessage: string, forceSummary = false) => {
@@ -246,6 +246,24 @@ export function Tab1DefineExperience() {
     }
   }
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // Submit on Enter, but allow Shift+Enter for new lines
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      if (input.trim() && !isLoading && experience.trim()) {
+        sendMessage(input.trim())
+      }
+    }
+  }
+
+  // Auto-resize textarea based on content
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.style.height = 'auto'
+      inputRef.current.style.height = `${Math.min(inputRef.current.scrollHeight, 200)}px`
+    }
+  }, [input])
+
   const handleSummarize = () => {
     if (!isLoading && experience.trim()) {
       sendMessage('', true)
@@ -294,15 +312,16 @@ export function Tab1DefineExperience() {
 
       {/* Fixed input at bottom */}
       <div className="fixed bottom-0 left-0 right-0 border-t border-gray-700 bg-gray-800 p-4 z-40">
-        <form onSubmit={handleSubmit} className="max-w-4xl mx-auto flex gap-2">
-          <input
+        <form onSubmit={handleSubmit} className="max-w-4xl mx-auto flex gap-2 items-end">
+          <textarea
             ref={inputRef}
-            type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
             placeholder="Answer the question..."
             disabled={inputDisabled}
-            className="flex-1 px-4 py-2 bg-gray-700 text-gray-100 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+            rows={1}
+            className="flex-1 px-4 py-2 bg-gray-700 text-gray-100 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 resize-none overflow-hidden min-h-[44px] max-h-[200px]"
           />
           <button
             type="submit"
