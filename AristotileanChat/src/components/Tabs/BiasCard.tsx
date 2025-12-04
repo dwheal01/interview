@@ -27,17 +27,22 @@ export function BiasCard({ bias }: BiasCardProps) {
     setBiasDecisions((prev) => ({ ...prev, [bias.id]: 'accepted' }))
   }
 
-  const handleAddIdea = (idea: string) => {
-    // Add to Tab 2 state if not already there
-    if (!myIdeas.includes(idea)) {
+  const handleToggleIdea = (idea: string) => {
+    const isAlreadyAdded = myIdeas.includes(idea)
+    
+    if (isAlreadyAdded) {
+      // Remove from Tab 2 ideas
+      setMyIdeas((prev) => prev.filter((i) => i !== idea))
+    } else {
+      // Add to Tab 2 state
       setMyIdeas((prev) => [...prev, idea])
-    }
-    if (!allSuggestedIdeas.includes(idea)) {
-      setAllSuggestedIdeas((prev) => [...prev, idea])
-    }
-    // Mark as Tab 3 challenging idea for purple color
-    if (!tab3ChallengingIdeas.includes(idea)) {
-      setTab3ChallengingIdeas((prev) => [...prev, idea])
+      if (!allSuggestedIdeas.includes(idea)) {
+        setAllSuggestedIdeas((prev) => [...prev, idea])
+      }
+      // Mark as Tab 3 challenging idea for purple color
+      if (!tab3ChallengingIdeas.includes(idea)) {
+        setTab3ChallengingIdeas((prev) => [...prev, idea])
+      }
     }
   }
 
@@ -85,22 +90,24 @@ export function BiasCard({ bias }: BiasCardProps) {
           <p className="mb-2 text-xs font-semibold uppercase text-purple-400">
             Ideas that challenge this bias
           </p>
-          <ul className="space-y-1 text-sm">
-            {bias.challengingIdeas.map((idea) => (
-              <li key={idea} className="flex items-start gap-2">
-                <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-purple-500" />
-                <div className="flex-1 text-purple-300">
+          <div className="flex flex-wrap gap-2">
+            {bias.challengingIdeas.map((idea) => {
+              const isAdded = myIdeas.includes(idea)
+              return (
+                <button
+                  key={idea}
+                  onClick={() => handleToggleIdea(idea)}
+                  className={`px-4 py-2 rounded-full text-sm transition ${
+                    isAdded
+                      ? 'bg-gray-600 text-gray-400 border border-gray-500'
+                      : 'bg-purple-600 text-white hover:bg-purple-700'
+                  }`}
+                >
                   {idea}
-                  <button
-                    onClick={() => handleAddIdea(idea)}
-                    className="ml-2 text-xs font-semibold text-purple-400 underline underline-offset-2 hover:text-purple-300"
-                  >
-                    Add to my ideas
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
+                </button>
+              )
+            })}
+          </div>
         </div>
       )}
     </div>
