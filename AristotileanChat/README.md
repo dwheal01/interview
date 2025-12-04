@@ -1,4 +1,4 @@
-# AristotileanChat
+# AristotelianChat
 
 A guided human experience brainstorming chatbot built with Vite + React + TypeScript + TailwindCSS and Vercel Serverless Functions.
 
@@ -154,7 +154,7 @@ The build output will be in the `dist/` directory.
 ## Project Structure
 
 ```
-AristotileanChat/
+AristotelianChat/
 ├── api/
 │   └── chat.ts              # Vercel serverless function
 ├── src/

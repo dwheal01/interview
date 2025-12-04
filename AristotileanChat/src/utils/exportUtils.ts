@@ -116,6 +116,6 @@ export function generateExportFilename(experience: string): string {
     .replace(/^-|-$/g, '')
     .substring(0, 50)
   const timestamp = new Date().toISOString().split('T')[0]
-  return `aristotilean-chat-${sanitized || 'session'}-${timestamp}.json`
+  return `aristotelian-chat-${sanitized || 'session'}-${timestamp}.json`
 }
 
