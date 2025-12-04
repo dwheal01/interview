@@ -5,6 +5,7 @@ import { ExperienceInput } from './components/ExperienceInput'
 import { Tab1DefineExperience } from './components/Tabs/Tab1DefineExperience'
 import { Tab2GenerateIdeas } from './components/Tabs/Tab2GenerateIdeas'
 import { Tab3ChallengeBiases } from './components/Tabs/Tab3ChallengeBiases'
+import { ErrorBoundary } from './components/ErrorBoundary'
 
 function AppContent() {
   const [activeTab, setActiveTab] = useState<'tab1' | 'tab2' | 'tab3'>('tab1')
@@ -75,9 +76,11 @@ function AppContent() {
 
       {/* Tab Content */}
       <main className="flex-1 overflow-hidden">
-        {activeTab === 'tab1' && <Tab1DefineExperience />}
-        {activeTab === 'tab2' && <Tab2GenerateIdeas />}
-        {activeTab === 'tab3' && <Tab3ChallengeBiases />}
+        <ErrorBoundary>
+          {activeTab === 'tab1' && <Tab1DefineExperience />}
+          {activeTab === 'tab2' && <Tab2GenerateIdeas />}
+          {activeTab === 'tab3' && <Tab3ChallengeBiases />}
+        </ErrorBoundary>
       </main>
     </div>
   )
@@ -85,8 +88,10 @@ function AppContent() {
 
 export default function App() {
   return (
-    <SessionProvider>
-      <AppContent />
-    </SessionProvider>
+    <ErrorBoundary>
+      <SessionProvider>
+        <AppContent />
+      </SessionProvider>
+    </ErrorBoundary>
   )
 }

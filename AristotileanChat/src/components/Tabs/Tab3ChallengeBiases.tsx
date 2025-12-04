@@ -61,6 +61,12 @@ export function Tab3ChallengeBiases() {
       }
 
       const data = await response.json()
+      
+      // Validate response has rawText
+      if (!data.rawText || typeof data.rawText !== 'string') {
+        throw new Error('Invalid response format from server')
+      }
+
       const { parsed } = parseModelOutput(data.rawText)
       const extractedBiases = extractBiases(parsed)
 

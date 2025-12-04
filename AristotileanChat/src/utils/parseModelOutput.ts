@@ -77,10 +77,36 @@ export function extractSuggestedIdeas(parsed: ParsedOutput[]): string[] {
 
 /**
  * Extracts biases from parsed output
+ * Validates the structure before returning
  */
 export function extractBiases(parsed: ParsedOutput[]): Bias[] {
   const biases = parsed.find((p) => p.type === 'biases')
-  return biases ? (biases as ParsedBiases).items : []
+  if (!biases) {
+    return []
+  }
+
+  const parsedBiases = biases as ParsedBiases
+  if (!Array.isArray(parsedBiases.items)) {
+    return []
+  }
+
+  // Validate each bias object
+  const validated: Bias[] = []
+  for (const item of parsedBiases.items) {
+    if (
+      item &&
+      typeof item === 'object' &&
+      typeof item.id === 'string' &&
+      typeof item.title === 'string' &&
+      typeof item.explanation === 'string' &&
+      Array.isArray(item.challengingIdeas) &&
+      item.challengingIdeas.every((idea) => typeof idea === 'string')
+    ) {
+      validated.push(item as Bias)
+    }
+  }
+
+  return validated
 }
 
 /**

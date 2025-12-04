@@ -51,9 +51,8 @@ export function Tab2GenerateIdeas() {
         content: msg.content,
       }))
 
-      // Ensure we have a valid experience/summary
-      const experienceValue = tab1Summary || experience
-      if (!experienceValue || experienceValue.trim().length === 0) {
+      // Ensure we have the original experience name (not the summary)
+      if (!experience || experience.trim().length === 0) {
         throw new Error('Please complete Tab 1 first to generate ideas')
       }
 
@@ -62,7 +61,8 @@ export function Tab2GenerateIdeas() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           mode: 'generate-ideas',
-          experience: experienceValue,
+          experience, // Original experience name (must be <= 500 chars)
+          summary: tab1Summary, // Summary can be longer, sent separately
           history: historyForAPI,
           myIdeas,
           allSuggestedIdeas,
@@ -84,6 +84,12 @@ export function Tab2GenerateIdeas() {
       }
 
       const data = await response.json()
+      
+      // Validate response structure
+      if (!data || typeof data !== 'object' || !data.rawText || typeof data.rawText !== 'string') {
+        throw new Error('Invalid response format from server')
+      }
+      
       const { parsed } = parseModelOutput(data.rawText)
       const newIdeas = extractSuggestedIdeas(parsed)
 

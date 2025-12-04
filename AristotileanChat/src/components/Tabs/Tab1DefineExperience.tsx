@@ -64,9 +64,14 @@ export function Tab1DefineExperience() {
 
       const data = await response.json()
       
+      // Validate response structure
+      if (!data || typeof data !== 'object') {
+        throw new Error('Invalid response format from server')
+      }
+      
       // Ensure we have rawText
       const rawText = data.rawText || data.assistantMessage || ''
-      if (!rawText) {
+      if (!rawText || typeof rawText !== 'string') {
         console.error('No text content in API response:', data)
         throw new Error('Received empty response from API')
       }
@@ -185,12 +190,17 @@ export function Tab1DefineExperience() {
 
           const data = await response.json()
           
+          // Validate response structure
+          if (!data || typeof data !== 'object') {
+            throw new Error('Invalid response format from server')
+          }
+          
           // Debug: log the response to see what we're getting
           console.log('API Response:', data)
           
           // Ensure we have rawText
           const rawText = data.rawText || data.assistantMessage || ''
-          if (!rawText) {
+          if (!rawText || typeof rawText !== 'string') {
             console.error('No text content in API response:', data)
             throw new Error('Received empty response from API')
           }

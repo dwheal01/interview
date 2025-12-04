@@ -257,8 +257,8 @@ If the request includes forceSummary=true, you MUST immediately produce a summar
         contextText = `Here is the full conversation from Tab 1 where the user explored their experience:\n\n${historyText}\n\n`
       }
       
-      // Note: body.experience contains the summary for generate-ideas mode
-      const summaryText = body.experience || 'No summary available'
+      // Use summary if provided, otherwise fall back to experience name
+      const summaryText = body.summary || body.experience || 'No summary available'
 
       systemPrompt = `You are generating new ideas for activities/places related to the experience.
 
