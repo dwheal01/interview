@@ -285,11 +285,11 @@ export function Tab1DefineExperience() {
   }, [inputDisabled, isLoading, conversationStarted])
 
   return (
-    <div className="flex flex-col h-full relative bg-transparent">
-      {/* Scrollable content area with padding for fixed input */}
-      <div className="flex-1 overflow-y-auto pb-32">
+    <div className="flex h-full flex-col bg-transparent">
+      {/* Scrollable chat area */}
+      <div className="flex-1 overflow-y-auto">
         {showPlaceholder ? (
-          <div className="flex items-center justify-center min-h-[calc(100vh-200px-80px)]">
+          <div className="flex items-center justify-center h-full">
             <p className="text-blue-400 text-lg">Enter a human experience above to begin.</p>
           </div>
         ) : (
@@ -310,8 +310,8 @@ export function Tab1DefineExperience() {
         )}
       </div>
 
-      {/* Fixed input at bottom */}
-      <div className="fixed bottom-0 left-0 right-0 border-t border-gray-700 bg-gray-800 p-4 z-40">
+      {/* Input row at the bottom */}
+      <div className="shrink-0 border-t border-gray-700 bg-gray-800 p-4">
         <form onSubmit={handleSubmit} className="max-w-4xl mx-auto flex gap-2 items-end">
           <textarea
             ref={inputRef}

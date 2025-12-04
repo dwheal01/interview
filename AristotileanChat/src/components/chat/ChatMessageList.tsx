@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import type { ChatMessage } from '../../context/SessionContextDef'
 import { MessageBubble } from './MessageBubble'
 
@@ -7,12 +8,24 @@ type ChatMessageListProps = {
 }
 
 export function ChatMessageList({ messages, isStreaming = false }: ChatMessageListProps) {
+  const bottomRef = useRef<HTMLDivElement | null>(null)
+
   // Check if we're waiting for an assistant response (last message is from user or no messages yet)
   const lastMessage = messages[messages.length - 1]
   const waitingForResponse = isStreaming && (!lastMessage || lastMessage.role === 'user')
 
+  // Auto-scroll to bottom when messages update or streaming state changes
+  useEffect(() => {
+    if (!bottomRef.current) return
+
+    bottomRef.current.scrollIntoView({
+      behavior: isStreaming ? 'auto' : 'smooth', // Use 'auto' during streaming to avoid lag
+      block: 'end',
+    })
+  }, [messages.length, isStreaming, lastMessage?.content]) // Include last message content for streaming updates
+
   return (
-    <div className="px-4 py-6 space-y-2">
+    <div className="space-y-3 px-4 py-4">
       {messages.map((message, idx) => (
         <MessageBubble
           key={message.id}
@@ -31,6 +44,7 @@ export function ChatMessageList({ messages, isStreaming = false }: ChatMessageLi
           </div>
         </div>
       )}
+      <div ref={bottomRef} />
     </div>
   )
 }
