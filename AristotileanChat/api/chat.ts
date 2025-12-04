@@ -215,7 +215,14 @@ When you're ready to provide a summary, first acknowledge their sharing, then ou
 {"type":"summary","complete":true,"content":"...summary text..."}
 \`\`\`
 
-CRITICAL: The summary must be based ONLY on what the user has shared with you in this conversation. It should reflect their personal understanding, their specific memories, feelings, and interpretations - NOT a general definition of the experience. The summary should capture what THEY believe this experience means to them based on what they've told you.
+CRITICAL: The summary must be an INTERPRETATION and SYNTHESIS of how the user views this experience, NOT a literal recap of what they said. 
+
+- Synthesize the underlying themes, values, and perspectives that emerge from their stories and responses
+- Draw conclusions about what this experience fundamentally means to them based on patterns in what they've shared
+- Capture their worldview, emotional relationship, and personal philosophy regarding this experience
+- Focus on the "why" and "what it reveals" rather than just the "what they said"
+- Write it as an insightful interpretation that reveals their unique perspective, not as a summary of the conversation itself
+- The summary should read like a thoughtful conclusion about their relationship with this experience, showing what you've learned about how they understand and relate to it
 
 After outputting the JSON marker, do not ask any further questions.
 
@@ -232,11 +239,23 @@ If the request includes forceSummary=true, you MUST immediately produce a summar
       const allIdeas = [...(body.myIdeas || []), ...(body.allSuggestedIdeas || [])]
       const ideasList = allIdeas.length > 0 ? allIdeas.join('\n- ') : 'None yet'
 
-      systemPrompt = `You are generating new ideas for activities/places related to the experience of "${body.experience}".
+      // Build context from chat history and summary
+      let contextText = ''
+      if (body.history && body.history.length > 0) {
+        const historyText = body.history
+          .map((msg) => `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`)
+          .join('\n\n')
+        contextText = `Here is the full conversation from Tab 1 where the user explored their experience:\n\n${historyText}\n\n`
+      }
+      
+      // Note: body.experience contains the summary for generate-ideas mode
+      const summaryText = body.experience || 'No summary available'
 
-Here is the user's interpretation summary:
+      systemPrompt = `You are generating new ideas for activities/places related to the experience.
 
-${body.experience}
+${contextText}Here is the user's interpretation summary (synthesized from the conversation above):
+
+${summaryText}
 
 Here are ALL prior ideas (user + AI):
 - ${ideasList}
@@ -247,7 +266,7 @@ Generate fresh ideas that are not duplicates and return them in a JSON marker li
 {"type":"suggested_ideas","items":["idea1","idea2",...]}
 \`\`\`
 
-Generate 5-8 diverse, creative ideas.`
+Generate 5-8 diverse, creative ideas that align with the user's personal understanding of this experience as revealed in the conversation.`
 
       messages = [
         {
@@ -259,14 +278,26 @@ Generate 5-8 diverse, creative ideas.`
       const allIdeas = [...(body.myIdeas || []), ...(body.allSuggestedIdeas || [])]
       const ideasList = allIdeas.length > 0 ? allIdeas.join('\n- ') : 'None'
 
-      systemPrompt = `You are analyzing the user's interpretation and prior ideas related to "${body.experience}".
+      // Build context from chat history and summary
+      let contextText = ''
+      if (body.history && body.history.length > 0) {
+        const historyText = body.history
+          .map((msg) => `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`)
+          .join('\n\n')
+        contextText = `Here is the full conversation from Tab 1 where the user explored their experience:\n\n${historyText}\n\n`
+      }
+      
+      // Note: body.experience contains the summary for challenge-biases mode
+      const summaryText = body.experience || 'No summary available'
 
-Use:
-- Summary of the experience: ${body.experience}
-- User's ideas: ${body.myIdeas?.join(', ') || 'None'}
-- All AI-suggested ideas: ${ideasList}
+      systemPrompt = `You are analyzing the user's interpretation and prior ideas related to this experience.
 
-Infer potential BIASES from these inputs.
+${contextText}Summary of the experience (synthesized from the conversation above): ${summaryText}
+
+User's ideas: ${body.myIdeas?.join(', ') || 'None'}
+All AI-suggested ideas: ${ideasList}
+
+Infer potential BIASES from these inputs, considering both the summary and the full conversation context.
 
 Generate ideas that CHALLENGE these biases.
 

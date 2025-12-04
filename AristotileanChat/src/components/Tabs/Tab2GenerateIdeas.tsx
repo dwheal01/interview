@@ -7,6 +7,7 @@ export function Tab2GenerateIdeas() {
   const {
     experience,
     tab1Summary,
+    tab1History,
     myIdeas,
     setMyIdeas,
     allSuggestedIdeas,
@@ -43,12 +44,19 @@ export function Tab2GenerateIdeas() {
     const signal = createAbortSignal()
     setIsLoading(true)
     try {
+      // Convert tab1History to API format (remove id field)
+      const historyForAPI = tab1History.map(({ id, ...msg }) => ({
+        role: msg.role,
+        content: msg.content,
+      }))
+
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           mode: 'generate-ideas',
-          experience,
+          experience: tab1Summary || experience,
+          history: historyForAPI,
           myIdeas,
           allSuggestedIdeas,
         }),
