@@ -26,6 +26,12 @@ export type SessionContextType = {
   allSuggestedIdeas: string[]
   setAllSuggestedIdeas: Dispatch<SetStateAction<string[]>>
 
+  // Tab 3: Challenge Biases
+  biases: string[]
+  setBiases: Dispatch<SetStateAction<string[]>>
+  challengingIdeas: string[]
+  setChallengingIdeas: Dispatch<SetStateAction<string[]>>
+
   // Reset function
   resetSession: () => void
 }

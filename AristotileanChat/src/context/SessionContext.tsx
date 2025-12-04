@@ -9,6 +9,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [isFinishedTab1, setIsFinishedTab1] = useState<boolean>(false)
   const [myIdeas, setMyIdeas] = useState<string[]>([])
   const [allSuggestedIdeas, setAllSuggestedIdeas] = useState<string[]>([])
+  const [biases, setBiases] = useState<string[]>([])
+  const [challengingIdeas, setChallengingIdeas] = useState<string[]>([])
 
   const resetSession = () => {
     setTab1History([])
@@ -16,6 +18,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     setIsFinishedTab1(false)
     setMyIdeas([])
     setAllSuggestedIdeas([])
+    setBiases([])
+    setChallengingIdeas([])
   }
 
   return (
@@ -33,6 +37,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         setMyIdeas,
         allSuggestedIdeas,
         setAllSuggestedIdeas,
+        biases,
+        setBiases,
+        challengingIdeas,
+        setChallengingIdeas,
         resetSession,
       }}
     >

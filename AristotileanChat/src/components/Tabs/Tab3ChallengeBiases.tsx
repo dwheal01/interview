@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useSession } from '../../context/useSession'
 import { parseModelOutput, extractBiases, extractChallengingIdeas } from '../../utils/parseModelOutput'
 import { useAbortController } from '../../hooks/useAbortController'
@@ -10,11 +10,14 @@ export function Tab3ChallengeBiases() {
     tab1History,
     myIdeas,
     allSuggestedIdeas,
+    biases,
+    setBiases,
+    challengingIdeas,
+    setChallengingIdeas,
   } = useSession()
 
-  const [biases, setBiases] = useState<string[]>([])
-  const [challengingIdeas, setChallengingIdeas] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const hasRunInitialAnalysis = useRef(false)
   const { createAbortSignal, isAborted } = useAbortController()
 
   const handleAnalyze = useCallback(async () => {
@@ -61,6 +64,9 @@ export function Tab3ChallengeBiases() {
       if (extractedChallengingIdeas.length > 0) {
         setChallengingIdeas(extractedChallengingIdeas)
       }
+      
+      // Mark that we've run the initial analysis
+      hasRunInitialAnalysis.current = true
     } catch (error) {
       // Don't show error for aborted requests
       if (error instanceof Error && error.name === 'AbortError') {
@@ -74,14 +80,22 @@ export function Tab3ChallengeBiases() {
         setIsLoading(false)
       }
     }
-  }, [tab1Summary, experience, myIdeas, allSuggestedIdeas, createAbortSignal, isAborted])
+  }, [tab1Summary, experience, tab1History, myIdeas, allSuggestedIdeas, createAbortSignal, isAborted])
 
-  // Auto-analyze when tab is accessed if we have data
+  // Run analysis once when tab first opens (if conditions are met and we don't have results)
   useEffect(() => {
-    if (tab1Summary && (myIdeas.length > 0 || allSuggestedIdeas.length > 0) && biases.length === 0 && !isLoading) {
+    // Only run if we don't have any results yet and haven't run before
+    const hasResults = biases.length > 0 || challengingIdeas.length > 0
+    if (
+      !hasRunInitialAnalysis.current &&
+      !hasResults &&
+      tab1Summary &&
+      (myIdeas.length > 0 || allSuggestedIdeas.length > 0) &&
+      !isLoading
+    ) {
       handleAnalyze()
     }
-  }, [tab1Summary, myIdeas.length, allSuggestedIdeas.length, biases.length, isLoading, handleAnalyze])
+  }, [tab1Summary, myIdeas.length, allSuggestedIdeas.length, biases.length, challengingIdeas.length, isLoading, handleAnalyze])
 
   return (
     <div className="flex flex-col h-full bg-transparent overflow-hidden">
@@ -94,7 +108,7 @@ export function Tab3ChallengeBiases() {
               disabled={isLoading || !tab1Summary}
               className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
             >
-              {isLoading ? 'Analyzing...' : 'Analyze Biases'}
+              {isLoading ? 'Analyzing...' : biases.length > 0 || challengingIdeas.length > 0 ? 'Refresh Analysis' : 'Analyze Biases'}
             </button>
           </div>
 
