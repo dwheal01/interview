@@ -16,13 +16,40 @@ export function ChatMessageList({ messages, isStreaming = false }: ChatMessageLi
 
   // Auto-scroll to bottom when messages update or streaming state changes
   useEffect(() => {
-    if (!bottomRef.current) return
+    // Use requestAnimationFrame to ensure DOM has updated before scrolling
+    const scrollToBottom = () => {
+      if (!bottomRef.current) return
 
-    bottomRef.current.scrollIntoView({
-      behavior: isStreaming ? 'auto' : 'smooth', // Use 'auto' during streaming to avoid lag
-      block: 'end',
+      // Find the scrollable parent container
+      let scrollableParent: HTMLElement | null = bottomRef.current.parentElement
+      while (scrollableParent) {
+        const style = window.getComputedStyle(scrollableParent)
+        if (style.overflowY === 'auto' || style.overflowY === 'scroll') {
+          break
+        }
+        scrollableParent = scrollableParent.parentElement
+      }
+
+      if (scrollableParent) {
+        // Scroll the parent container to the bottom
+        scrollableParent.scrollTo({
+          top: scrollableParent.scrollHeight,
+          behavior: isStreaming ? 'auto' : 'smooth',
+        })
+      } else {
+        // Fallback to scrollIntoView
+        bottomRef.current.scrollIntoView({
+          behavior: isStreaming ? 'auto' : 'smooth',
+          block: 'end',
+        })
+      }
+    }
+
+    // Double RAF to ensure layout has completed
+    requestAnimationFrame(() => {
+      requestAnimationFrame(scrollToBottom)
     })
-  }, [messages.length, isStreaming, lastMessage?.content]) // Include last message content for streaming updates
+  }, [messages, isStreaming]) // Use messages array directly to catch all changes
 
   return (
     <div className="space-y-3 px-4 py-4">
