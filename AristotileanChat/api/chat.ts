@@ -262,21 +262,33 @@ If the request includes forceSummary=true, you MUST immediately produce a summar
 
       systemPrompt = `You are generating new ideas for activities/places related to the experience.
 
-${contextText}Here is the user's interpretation summary (synthesized from the conversation above):
-
-${summaryText}
-
-Here are ALL prior ideas (user + AI):
-- ${ideasList}
-
-Generate fresh ideas that are not duplicates and return them in a JSON marker like:
-
-\`\`\`json
-{"type":"suggested_ideas","items":["idea1","idea2",...]}
-\`\`\`
-
-Generate 5-8 diverse, creative ideas that align with the user's personal understanding of this experience as revealed in the conversation.`
-
+      ${contextText}Here is the user's interpretation summary (synthesized from the conversation above):
+      
+      ${summaryText}
+      
+      Here are ALL prior ideas (user + AI):
+      - ${ideasList}
+      
+      CRITICAL INSTRUCTIONS:
+      1. DO NOT simply repeat or paraphrase specific examples mentioned in the conversation or summary.
+      2. Instead, identify the UNDERLYING THEMES, VALUES, and PATTERNS from the user's interpretation.
+      3. EXTEND those themes into NEW, CREATIVE ideas that align with those patterns but are distinct from what was already discussed.
+      4. Think about what the themes suggest about the user's deeper needs and preferences, then generate ideas that serve those needs in fresh ways.
+      
+      Examples of what NOT to do:
+      - If the user mentioned "going to a park," don't suggest "visit a different park" or "go to Central Park"
+      - If they mentioned "reading," don't suggest "read a book" or "read in a library"
+      
+      Examples of what TO do:
+      - If the user mentioned "going to a park" (theme: being in nature, quiet spaces), suggest: "Take a nature photography walk" or "Join a silent meditation group outdoors"
+      - If they mentioned "reading" (theme: intellectual stimulation, solitude), suggest: "Attend a book club discussion" or "Visit a rare book collection"
+      
+      Generate 5-8 diverse, creative ideas that extend the themes from the user's interpretation into new directions. Return them in a JSON marker like:
+      
+      \`\`\`json
+      {"type":"suggested_ideas","items":["idea1","idea2",...]}
+      \`\`\``
+      
       messages = [
         {
           role: 'user',
