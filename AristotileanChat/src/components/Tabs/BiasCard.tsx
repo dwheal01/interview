@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useSession } from '../../context/useSession'
 import type { Bias } from '../../context/SessionContextDef'
 
@@ -15,9 +16,13 @@ export function BiasCard({ bias }: BiasCardProps) {
     setAllSuggestedIdeas,
     tab3ChallengingIdeas,
     setTab3ChallengingIdeas,
+    biasUserIdeas,
+    setBiasUserIdeas,
   } = useSession()
 
+  const [newIdeaInput, setNewIdeaInput] = useState('')
   const decision = biasDecisions[bias.id]
+  const userIdeas = biasUserIdeas[bias.id] || []
 
   const handleReject = () => {
     setBiasDecisions((prev) => ({ ...prev, [bias.id]: 'rejected' }))
@@ -46,6 +51,37 @@ export function BiasCard({ bias }: BiasCardProps) {
     }
   }
 
+  const handleAddUserIdea = () => {
+    const idea = newIdeaInput.trim()
+    if (idea && !userIdeas.includes(idea) && !myIdeas.includes(idea)) {
+      // Add to user's ideas for this bias (display in blue) - persist in session context
+      setBiasUserIdeas((prev) => ({
+        ...prev,
+        [bias.id]: [...(prev[bias.id] || []), idea],
+      }))
+      // Add to Tab 2 ideas (will show as blue since it's not in tab3ChallengingIdeas)
+      setMyIdeas((prev) => [...prev, idea])
+      setNewIdeaInput('')
+    }
+  }
+
+  const handleRemoveUserIdea = (idea: string) => {
+    // Remove from this bias's user ideas
+    setBiasUserIdeas((prev) => ({
+      ...prev,
+      [bias.id]: (prev[bias.id] || []).filter((i) => i !== idea),
+    }))
+    // Remove from Tab 2 ideas
+    setMyIdeas((prev) => prev.filter((i) => i !== idea))
+  }
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleAddUserIdea()
+    }
+  }
+
   const isRejected = decision === 'rejected'
   const isAccepted = decision === 'accepted'
 
@@ -62,7 +98,7 @@ export function BiasCard({ bias }: BiasCardProps) {
         {bias.explanation}
       </p>
 
-      <div className="mb-3 flex gap-2">
+      <div className="mb-3 flex gap-2 items-center flex-wrap">
         <button
           onClick={handleReject}
           className={`rounded-full border px-3 py-1 text-sm transition ${
@@ -83,6 +119,25 @@ export function BiasCard({ bias }: BiasCardProps) {
         >
           ✔ This resonates
         </button>
+        {isAccepted && (
+          <div className="flex items-center gap-2 flex-1 min-w-[200px]">
+            <input
+              type="text"
+              value={newIdeaInput}
+              onChange={(e) => setNewIdeaInput(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Add your own idea..."
+              className="flex-1 px-3 py-1 text-sm rounded-md border border-gray-500 bg-gray-600 text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500 placeholder-gray-400"
+            />
+            <button
+              onClick={handleAddUserIdea}
+              disabled={!newIdeaInput.trim()}
+              className="px-3 py-1 text-sm bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+            >
+              Add
+            </button>
+          </div>
+        )}
       </div>
 
       {isAccepted && (
@@ -91,6 +146,7 @@ export function BiasCard({ bias }: BiasCardProps) {
             Ideas that challenge this bias
           </p>
           <div className="flex flex-wrap gap-2">
+            {/* AI-suggested challenging ideas (purple) */}
             {bias.challengingIdeas.map((idea) => {
               const isAdded = myIdeas.includes(idea)
               return (
@@ -101,6 +157,23 @@ export function BiasCard({ bias }: BiasCardProps) {
                     isAdded
                       ? 'bg-gray-600 text-gray-400 border border-gray-500'
                       : 'bg-purple-600 text-white hover:bg-purple-700'
+                  }`}
+                >
+                  {idea}
+                </button>
+              )
+            })}
+            {/* User's own ideas (blue) */}
+            {userIdeas.map((idea) => {
+              const isAdded = myIdeas.includes(idea)
+              return (
+                <button
+                  key={idea}
+                  onClick={() => handleRemoveUserIdea(idea)}
+                  className={`px-4 py-2 rounded-full text-sm transition ${
+                    isAdded
+                      ? 'bg-blue-600 text-white hover:bg-blue-700'
+                      : 'bg-gray-600 text-gray-400 border border-gray-500'
                   }`}
                 >
                   {idea}

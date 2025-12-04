@@ -12,6 +12,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [tab3ChallengingIdeas, setTab3ChallengingIdeas] = useState<string[]>([])
   const [biases, setBiases] = useState<Bias[] | null>(null)
   const [biasDecisions, setBiasDecisions] = useState<Record<string, 'accepted' | 'rejected' | undefined>>({})
+  const [biasUserIdeas, setBiasUserIdeas] = useState<Record<string, string[]>>({})
 
   const resetSession = () => {
     setTab1History([])
@@ -22,6 +23,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     setTab3ChallengingIdeas([])
     setBiases(null)
     setBiasDecisions({})
+    setBiasUserIdeas({})
   }
 
   return (
@@ -45,6 +47,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         setBiases,
         biasDecisions,
         setBiasDecisions,
+        biasUserIdeas,
+        setBiasUserIdeas,
         resetSession,
       }}
     >

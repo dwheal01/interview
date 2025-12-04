@@ -40,6 +40,8 @@ export type SessionContextType = {
   setBiases: Dispatch<SetStateAction<Bias[] | null>>
   biasDecisions: Record<string, 'accepted' | 'rejected' | undefined>
   setBiasDecisions: Dispatch<SetStateAction<Record<string, 'accepted' | 'rejected' | undefined>>>
+  biasUserIdeas: Record<string, string[]>
+  setBiasUserIdeas: Dispatch<SetStateAction<Record<string, string[]>>>
 
   // Reset function
   resetSession: () => void
