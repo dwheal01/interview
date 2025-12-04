@@ -4,13 +4,14 @@
 
 ### Error Handling
 
-**Problem**: Using `alert()` for user-facing errors (9 instances)
+**Problem**: Using `alert()` for user-facing errors (12 instances)
 
 - **Impact**: Poor UX, blocks interaction, not accessible, breaks user flow
 - **Locations**:
   - Tab1DefineExperience.tsx: lines 27, 33, 126, 229
   - Tab2GenerateIdeas.tsx: lines 41, 103
   - Tab3ChallengeBiases.tsx: lines 24, 72, 81
+  - ExportButton.tsx: lines 31, 56, 60 (NEW)
 - **Fix**: Implement a toast/notification system or inline error messages (see StickyNoteBoard example)
 
 ### API Error Exposure
@@ -125,10 +126,11 @@
 
 ### State Management Complexity
 
-**Problem**: Multiple related state arrays (myIdeas, allSuggestedIdeas, tab3ChallengingIdeas) require careful coordination
+**Problem**: Multiple related state arrays (myIdeas, allSuggestedIdeas, tab3ChallengingIdeas, biasUserIdeas) require careful coordination
 
 - **Impact**: Easy to introduce bugs, state can get out of sync
 - **Location**: SessionContext.tsx, Tab2GenerateIdeas.tsx, BiasCard.tsx
+- **Note**: Added `biasUserIdeas` to track user-added ideas per bias in Tab 3 (NEW)
 - **Fix**: Consider consolidating into a single ideas state with metadata (source, type, etc.)
 
 ### Inconsistent Error Messages
@@ -162,6 +164,17 @@
   - Initial conversation start (Tab1)
   - Bias analysis loading (Tab3)
   - Ideas generation (Tab2)
+
+### Export Functionality ✅ ADDED
+
+**Status**: ✅ **ADDED** - Export functionality implemented
+
+- **Location**: `src/components/ExportButton.tsx`, `src/utils/exportUtils.ts`
+- **Features**:
+  - Export entire session as JSON
+  - Download as file or copy to clipboard
+  - Includes all conversation, ideas, and bias analysis data
+  - Structured format for future import functionality
 
 ## Low Priority Issues
 

@@ -6,6 +6,7 @@ import { Tab1DefineExperience } from './components/Tabs/Tab1DefineExperience'
 import { Tab2GenerateIdeas } from './components/Tabs/Tab2GenerateIdeas'
 import { Tab3ChallengeBiases } from './components/Tabs/Tab3ChallengeBiases'
 import { ErrorBoundary } from './components/ErrorBoundary'
+import { ExportButton } from './components/ExportButton'
 
 function AppContent() {
   const [activeTab, setActiveTab] = useState<'tab1' | 'tab2' | 'tab3'>('tab1')
@@ -25,6 +26,9 @@ function AppContent() {
             </h1>
             <div className="flex-1 min-w-0">
               <ExperienceInput onExperienceSubmitted={() => setActiveTab('tab1')} />
+            </div>
+            <div className="shrink-0">
+              <ExportButton />
             </div>
           </div>
         </div>

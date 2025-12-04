@@ -6,7 +6,8 @@ A guided human experience brainstorming chatbot built with Vite + React + TypeSc
 
 - **Tab 1: Define Experience** - Multi-turn Q&A to understand what a human experience means to the user
 - **Tab 2: Generate Ideas** - Expand user-provided ideas with AI suggestions using a chip system
-- **Tab 3: Challenge Biases** - Identify biases in thinking and generate ideas that challenge them
+- **Tab 3: Challenge Biases** - Identify biases in thinking and generate ideas that challenge them. Users can also add their own ideas directly in Tab 3
+- **Export Session** - Export entire interactions as JSON (download or copy to clipboard)
 
 ## Tech Stack
 
@@ -164,15 +165,22 @@ AristotileanChat/
 │   │   └── SessionContext.tsx  # Global state management
 │   ├── components/
 │   │   ├── ExperienceInput.tsx
+│   │   ├── ExportButton.tsx     # Export functionality
+│   │   ├── ErrorBoundary.tsx     # Error boundary component
 │   │   ├── Tabs/
 │   │   │   ├── Tab1DefineExperience.tsx
 │   │   │   ├── Tab2GenerateIdeas.tsx
-│   │   │   └── Tab3ChallengeBiases.tsx
+│   │   │   ├── Tab3ChallengeBiases.tsx
+│   │   │   └── BiasCard.tsx      # Bias card component
 │   │   └── chat/
 │   │       ├── ChatMessageList.tsx
 │   │       └── MessageBubble.tsx
-│   └── utils/
-│       └── parseModelOutput.ts   # JSON marker extraction helpers
+│   ├── utils/
+│   │   ├── parseModelOutput.ts   # JSON marker extraction helpers
+│   │   ├── exportUtils.ts         # Export functionality utilities
+│   │   └── validation.ts          # Validation utilities
+│   └── hooks/
+│       └── useAbortController.ts  # Abort controller hook
 └── vercel.json              # Vercel configuration
 ```
 
@@ -180,9 +188,11 @@ AristotileanChat/
 
 1. **Tab 1**: User enters an experience (e.g., "finding peace"). The AI asks questions one at a time to understand what this means to them. When ready, it produces a summary.
 
-2. **Tab 2**: User can add their own ideas and click "Generate More Ideas" to get AI suggestions. Ideas are displayed as chips that can be clicked to add to the user's list.
+2. **Tab 2**: User can add their own ideas and click "Generate More Ideas" to get AI suggestions. Ideas are displayed as chips that can be clicked to add to the user's list. Ideas are color-coded: blue for user-typed, green for AI suggestions from Tab 2, purple for bias-challenging ideas from Tab 3.
 
-3. **Tab 3**: After generating ideas, the AI analyzes potential biases in the user's thinking and suggests ideas that challenge those biases.
+3. **Tab 3**: After generating ideas, the AI analyzes potential biases in the user's thinking and suggests ideas that challenge those biases. Users can accept or reject biases, and add their own ideas directly in Tab 3 (displayed in blue).
+
+4. **Export**: Users can export their entire session (conversation, ideas, biases) as JSON via the Export button in the header. Options include downloading as a file or copying to clipboard.
 
 All AI responses use hybrid JSON markers embedded in markdown code blocks for structured data extraction while maintaining natural language flow.
 
