@@ -1,4 +1,4 @@
-import type { ChatMessage } from '../../context/SessionContext'
+import type { ChatMessage } from '../../context/SessionContextDef'
 import { MessageBubble } from './MessageBubble'
 
 type ChatMessageListProps = {

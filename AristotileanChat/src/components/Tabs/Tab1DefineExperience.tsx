@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useSession } from '../../context/SessionContext'
+import { useSession } from '../../context/useSession'
 import { ChatMessageList } from '../chat/ChatMessageList'
 import { parseModelOutput, extractSummary } from '../../utils/parseModelOutput'
 import { createChatMessage } from '../../utils/messageUtils'

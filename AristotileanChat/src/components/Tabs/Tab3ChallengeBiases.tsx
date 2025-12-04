@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { useSession } from '../../context/SessionContext'
+import { useSession } from '../../context/useSession'
 import { parseModelOutput, extractBiases, extractChallengingIdeas } from '../../utils/parseModelOutput'
 import { useAbortController } from '../../hooks/useAbortController'
 

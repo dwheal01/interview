@@ -1,4 +1,4 @@
-import type { ChatMessage } from '../context/SessionContext'
+import type { ChatMessage } from '../context/SessionContextDef'
 
 /**
  * Generates a unique ID for a chat message

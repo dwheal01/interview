@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useSession } from '../../context/SessionContext'
+import { useSession } from '../../context/useSession'
 import { parseModelOutput, extractSuggestedIdeas } from '../../utils/parseModelOutput'
 import { useAbortController } from '../../hooks/useAbortController'
 

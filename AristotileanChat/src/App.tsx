@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { SessionProvider, useSession } from './context/SessionContext'
+import { SessionProvider } from './context/SessionContext'
+import { useSession } from './context/useSession'
 import { ExperienceInput } from './components/ExperienceInput'
 import { Tab1DefineExperience } from './components/Tabs/Tab1DefineExperience'
 import { Tab2GenerateIdeas } from './components/Tabs/Tab2GenerateIdeas'
@@ -79,12 +80,10 @@ function AppContent() {
   )
 }
 
-function App() {
+export default function App() {
   return (
     <SessionProvider>
       <AppContent />
     </SessionProvider>
   )
 }
-
-export default App
