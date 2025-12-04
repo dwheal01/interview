@@ -9,6 +9,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [isFinishedTab1, setIsFinishedTab1] = useState<boolean>(false)
   const [myIdeas, setMyIdeas] = useState<string[]>([])
   const [allSuggestedIdeas, setAllSuggestedIdeas] = useState<string[]>([])
+  const [tab3ChallengingIdeas, setTab3ChallengingIdeas] = useState<string[]>([])
   const [biases, setBiases] = useState<Bias[] | null>(null)
   const [biasDecisions, setBiasDecisions] = useState<Record<string, 'accepted' | 'rejected' | undefined>>({})
 
@@ -18,6 +19,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     setIsFinishedTab1(false)
     setMyIdeas([])
     setAllSuggestedIdeas([])
+    setTab3ChallengingIdeas([])
     setBiases(null)
     setBiasDecisions({})
   }
@@ -37,6 +39,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         setMyIdeas,
         allSuggestedIdeas,
         setAllSuggestedIdeas,
+        tab3ChallengingIdeas,
+        setTab3ChallengingIdeas,
         biases,
         setBiases,
         biasDecisions,

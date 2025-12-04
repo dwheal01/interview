@@ -118,7 +118,7 @@ export function Tab3ChallengeBiases() {
         </div>
       </header>
 
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-y-auto">
         {isLoading ? (
           <div className="flex items-center justify-center h-full">
             <p className="text-gray-400">Analyzing your ideas for potential biases...</p>
@@ -134,12 +134,12 @@ export function Tab3ChallengeBiases() {
             <p className="text-gray-400">No biases were identified. Try refreshing the analysis.</p>
           </div>
         ) : (
-          <div className="flex-1 flex items-center justify-center px-6 py-6 relative">
-            {/* Left Arrow */}
+          <div className="flex items-center justify-center px-6 py-6 relative min-h-full">
+            {/* Left Arrow - Fixed to left side of screen */}
             <button
               onClick={() => setCurrentBiasIndex((prev) => Math.max(0, prev - 1))}
               disabled={currentBiasIndex === 0}
-              className="absolute left-4 z-10 p-2 rounded-full bg-gray-700 hover:bg-gray-600 disabled:opacity-30 disabled:cursor-not-allowed transition text-gray-300"
+              className="fixed left-4 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-gray-700 hover:bg-gray-600 disabled:opacity-30 disabled:cursor-not-allowed transition text-gray-300"
               aria-label="Previous bias"
             >
               <svg
@@ -162,13 +162,13 @@ export function Tab3ChallengeBiases() {
               <BiasCard bias={biases[currentBiasIndex]} />
             </div>
 
-            {/* Right Arrow */}
+            {/* Right Arrow - Fixed to right side of screen */}
             <button
               onClick={() =>
                 setCurrentBiasIndex((prev) => Math.min(biases.length - 1, prev + 1))
               }
               disabled={currentBiasIndex === biases.length - 1}
-              className="absolute right-4 z-10 p-2 rounded-full bg-gray-700 hover:bg-gray-600 disabled:opacity-30 disabled:cursor-not-allowed transition text-gray-300"
+              className="fixed right-4 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-gray-700 hover:bg-gray-600 disabled:opacity-30 disabled:cursor-not-allowed transition text-gray-300"
               aria-label="Next bias"
             >
               <svg
@@ -185,30 +185,29 @@ export function Tab3ChallengeBiases() {
                 />
               </svg>
             </button>
-
-            {/* Page Indicator */}
-            {biases.length > 1 && (
-              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
-                {biases.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentBiasIndex(index)}
-                    className={`h-2 rounded-full transition ${
-                      index === currentBiasIndex
-                        ? 'w-8 bg-purple-600'
-                        : 'w-2 bg-gray-600 hover:bg-gray-500'
-                    }`}
-                    aria-label={`Go to bias ${index + 1}`}
-                  />
-                ))}
-              </div>
-            )}
           </div>
         )}
       </div>
 
       {biases && biases.length > 0 && (
-        <div className="shrink-0 border-t border-gray-700 px-6 py-3 bg-gray-800">
+        <div className="shrink-0 border-t border-gray-700 px-6 py-3 bg-gray-800 relative">
+          {/* Page Indicator - Fixed above footer text */}
+          {biases.length > 1 && (
+            <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 z-20 flex gap-2">
+              {biases.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentBiasIndex(index)}
+                  className={`h-2 rounded-full transition ${
+                    index === currentBiasIndex
+                      ? 'w-8 bg-purple-600'
+                      : 'w-2 bg-gray-600 hover:bg-gray-500'
+                  }`}
+                  aria-label={`Go to bias ${index + 1}`}
+                />
+              ))}
+            </div>
+          )}
           <p className="text-xs text-gray-400 text-center">
             Accepted challenging ideas can be added to your list on Tab 2.
           </p>

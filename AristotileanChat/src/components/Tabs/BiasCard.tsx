@@ -13,6 +13,8 @@ export function BiasCard({ bias }: BiasCardProps) {
     setMyIdeas,
     allSuggestedIdeas,
     setAllSuggestedIdeas,
+    tab3ChallengingIdeas,
+    setTab3ChallengingIdeas,
   } = useSession()
 
   const decision = biasDecisions[bias.id]
@@ -32,6 +34,10 @@ export function BiasCard({ bias }: BiasCardProps) {
     }
     if (!allSuggestedIdeas.includes(idea)) {
       setAllSuggestedIdeas((prev) => [...prev, idea])
+    }
+    // Mark as Tab 3 challenging idea for purple color
+    if (!tab3ChallengingIdeas.includes(idea)) {
+      setTab3ChallengingIdeas((prev) => [...prev, idea])
     }
   }
 

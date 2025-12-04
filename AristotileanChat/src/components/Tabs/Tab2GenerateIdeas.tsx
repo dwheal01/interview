@@ -12,6 +12,7 @@ export function Tab2GenerateIdeas() {
     setMyIdeas,
     allSuggestedIdeas,
     setAllSuggestedIdeas,
+    tab3ChallengingIdeas,
   } = useSession()
 
   const [isLoading, setIsLoading] = useState(false)
@@ -138,13 +139,17 @@ export function Tab2GenerateIdeas() {
                 <p className="text-gray-400 text-sm">No ideas yet. Add some above!</p>
               ) : (
                 myIdeas.map((idea) => {
-                  // Check if this idea came from AI suggestions
-                  const isAISuggestion = allSuggestedIdeas.includes(idea)
+                  // Check if this idea came from Tab 3 (bias challenging ideas) - purple
+                  const isTab3Idea = tab3ChallengingIdeas.includes(idea)
+                  // Check if this idea came from AI suggestions (Tab 2) - green
+                  const isAISuggestion = allSuggestedIdeas.includes(idea) && !isTab3Idea
                   return (
                     <div
                       key={idea}
                       className={`group relative inline-flex items-center gap-2 px-4 py-2 rounded-full ${
-                        isAISuggestion
+                        isTab3Idea
+                          ? 'bg-purple-600 text-white'
+                          : isAISuggestion
                           ? 'bg-green-600 text-white'
                           : 'bg-blue-600 text-white'
                       }`}

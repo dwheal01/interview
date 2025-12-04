@@ -8,10 +8,10 @@ import { Tab3ChallengeBiases } from './components/Tabs/Tab3ChallengeBiases'
 
 function AppContent() {
   const [activeTab, setActiveTab] = useState<'tab1' | 'tab2' | 'tab3'>('tab1')
-  const { tab1Summary, allSuggestedIdeas } = useSession()
+  const { tab1Summary } = useSession()
 
   const isTab2Enabled = tab1Summary !== null
-  const isTab3Enabled = tab1Summary !== null && allSuggestedIdeas.length > 0
+  const isTab3Enabled = tab1Summary !== null
 
   return (
     <div className="flex h-screen flex-col bg-gray-900 text-gray-100">

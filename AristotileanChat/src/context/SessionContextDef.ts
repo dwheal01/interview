@@ -32,6 +32,8 @@ export type SessionContextType = {
   setMyIdeas: Dispatch<SetStateAction<string[]>>
   allSuggestedIdeas: string[]
   setAllSuggestedIdeas: Dispatch<SetStateAction<string[]>>
+  tab3ChallengingIdeas: string[]
+  setTab3ChallengingIdeas: Dispatch<SetStateAction<string[]>>
 
   // Tab 3: Challenge Biases
   biases: Bias[] | null
