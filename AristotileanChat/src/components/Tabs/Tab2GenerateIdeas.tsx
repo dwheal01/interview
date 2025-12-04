@@ -36,7 +36,7 @@ export function Tab2GenerateIdeas() {
   }
 
   const handleGenerateMore = async () => {
-    if (!tab1Summary) {
+    if (!tab1Summary || tab1Summary.trim().length === 0) {
       alert('Please complete Tab 1 first')
       return
     }
@@ -45,17 +45,23 @@ export function Tab2GenerateIdeas() {
     setIsLoading(true)
     try {
       // Convert tab1History to API format (remove id field)
-      const historyForAPI = tab1History.map(({ id, ...msg }) => ({
+      const historyForAPI = (tab1History || []).map(({ id, ...msg }) => ({
         role: msg.role,
         content: msg.content,
       }))
+
+      // Ensure we have a valid experience/summary
+      const experienceValue = tab1Summary || experience
+      if (!experienceValue || experienceValue.trim().length === 0) {
+        throw new Error('Please complete Tab 1 first to generate ideas')
+      }
 
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           mode: 'generate-ideas',
-          experience: tab1Summary || experience,
+          experience: experienceValue,
           history: historyForAPI,
           myIdeas,
           allSuggestedIdeas,
@@ -64,7 +70,16 @@ export function Tab2GenerateIdeas() {
       })
 
       if (!response.ok) {
-        throw new Error('Failed to generate ideas')
+        // Try to get error message from response
+        let errorMessage = 'Failed to generate ideas'
+        try {
+          const errorData = await response.json()
+          errorMessage = errorData.message || errorData.error || errorMessage
+        } catch {
+          // If JSON parsing fails, use status text
+          errorMessage = response.statusText || errorMessage
+        }
+        throw new Error(errorMessage)
       }
 
       const data = await response.json()
@@ -122,21 +137,29 @@ export function Tab2GenerateIdeas() {
               {myIdeas.length === 0 ? (
                 <p className="text-gray-400 text-sm">No ideas yet. Add some above!</p>
               ) : (
-                myIdeas.map((idea) => (
-                  <div
-                    key={idea}
-                    className="group relative inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-full"
-                  >
-                    <span className="text-sm">{idea}</span>
-                    <button
-                      onClick={() => handleRemoveMyIdea(idea)}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity text-white hover:text-red-300"
-                      aria-label="Remove"
+                myIdeas.map((idea) => {
+                  // Check if this idea came from AI suggestions
+                  const isAISuggestion = allSuggestedIdeas.includes(idea)
+                  return (
+                    <div
+                      key={idea}
+                      className={`group relative inline-flex items-center gap-2 px-4 py-2 rounded-full ${
+                        isAISuggestion
+                          ? 'bg-green-600 text-white'
+                          : 'bg-blue-600 text-white'
+                      }`}
                     >
-                      ×
-                    </button>
-                  </div>
-                ))
+                      <span className="text-sm">{idea}</span>
+                      <button
+                        onClick={() => handleRemoveMyIdea(idea)}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity text-white hover:text-red-300"
+                        aria-label="Remove"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  )
+                })
               )}
             </div>
           </div>
@@ -157,12 +180,29 @@ export function Tab2GenerateIdeas() {
 
           <div className="flex-1 overflow-y-auto min-h-0">
             <div className="flex flex-wrap gap-2">
-              {allSuggestedIdeas.length === 0 ? (
-                <p className="text-gray-400 text-sm">
-                  Click "Generate More" to get suggestions!
-                </p>
-              ) : (
-                allSuggestedIdeas.map((idea) => (
+              {(() => {
+                // Filter out ideas that are already in myIdeas
+                const availableSuggestions = allSuggestedIdeas.filter(
+                  (idea) => !myIdeas.includes(idea)
+                )
+                
+                if (availableSuggestions.length === 0) {
+                  if (allSuggestedIdeas.length === 0) {
+                    return (
+                      <p className="text-gray-400 text-sm">
+                        Click "Generate More" to get suggestions!
+                      </p>
+                    )
+                  } else {
+                    return (
+                      <p className="text-gray-400 text-sm">
+                        All suggestions have been added. Click "Generate More" for new ideas!
+                      </p>
+                    )
+                  }
+                }
+                
+                return availableSuggestions.map((idea) => (
                   <button
                     key={idea}
                     onClick={() => handleAddSuggestedIdea(idea)}
@@ -171,7 +211,7 @@ export function Tab2GenerateIdeas() {
                     + {idea}
                   </button>
                 ))
-              )}
+              })()}
             </div>
           </div>
         </div>
