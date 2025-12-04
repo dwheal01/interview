@@ -44,21 +44,21 @@ export function ExperienceInput({ onExperienceSubmitted }: ExperienceInputProps)
   const hasExperience = experience.trim() !== ''
 
   return (
-    <div className="w-full max-w-2xl mx-auto">
-      <label htmlFor="experience" className="block text-sm font-medium text-gray-300 mb-2">
-        I'm exploring the experience of…
-      </label>
+    <div className="w-full">
       <div className="flex items-center gap-2">
-        <div className="flex-1 relative">
+        <label htmlFor="experience" className="text-sm font-medium text-gray-300 shrink-0 whitespace-nowrap">
+          I'm exploring the experience of…
+        </label>
+        <div className="flex-1 relative min-w-0">
           <input
             id="experience"
             type="text"
             value={draftExperience}
             onChange={(e) => !hasExperience && setDraftExperience(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder={hasExperience ? undefined : "e.g., 'finding peace', 'feeling accomplished', 'connecting with nature'"}
+            placeholder={hasExperience ? undefined : "e.g., 'finding peace', 'feeling accomplished'"}
             disabled={hasExperience}
-            className={`w-full rounded-md border border-gray-600 px-3 py-2 bg-gray-700 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-500 ${
+            className={`w-full rounded-md border border-gray-600 px-3 py-2 bg-gray-700 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-500 text-sm ${
               hasExperience ? 'cursor-default opacity-90' : ''
             }`}
           />

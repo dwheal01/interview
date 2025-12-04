@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { ReactNode } from 'react'
-import { SessionContext, type ChatMessage } from './SessionContextDef'
+import { SessionContext, type ChatMessage, type Bias } from './SessionContextDef'
 
 export function SessionProvider({ children }: { children: ReactNode }) {
   const [experience, setExperience] = useState<string>('')
@@ -9,8 +9,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [isFinishedTab1, setIsFinishedTab1] = useState<boolean>(false)
   const [myIdeas, setMyIdeas] = useState<string[]>([])
   const [allSuggestedIdeas, setAllSuggestedIdeas] = useState<string[]>([])
-  const [biases, setBiases] = useState<string[]>([])
-  const [challengingIdeas, setChallengingIdeas] = useState<string[]>([])
+  const [biases, setBiases] = useState<Bias[] | null>(null)
+  const [biasDecisions, setBiasDecisions] = useState<Record<string, 'accepted' | 'rejected' | undefined>>({})
 
   const resetSession = () => {
     setTab1History([])
@@ -18,8 +18,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     setIsFinishedTab1(false)
     setMyIdeas([])
     setAllSuggestedIdeas([])
-    setBiases([])
-    setChallengingIdeas([])
+    setBiases(null)
+    setBiasDecisions({})
   }
 
   return (
@@ -39,8 +39,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         setAllSuggestedIdeas,
         biases,
         setBiases,
-        challengingIdeas,
-        setChallengingIdeas,
+        biasDecisions,
+        setBiasDecisions,
         resetSession,
       }}
     >

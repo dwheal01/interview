@@ -7,6 +7,13 @@ export type ChatMessage = {
   content: string
 }
 
+export type Bias = {
+  id: string
+  title: string
+  explanation: string
+  challengingIdeas: string[]
+}
+
 export type SessionContextType = {
   // Experience input
   experience: string
@@ -27,10 +34,10 @@ export type SessionContextType = {
   setAllSuggestedIdeas: Dispatch<SetStateAction<string[]>>
 
   // Tab 3: Challenge Biases
-  biases: string[]
-  setBiases: Dispatch<SetStateAction<string[]>>
-  challengingIdeas: string[]
-  setChallengingIdeas: Dispatch<SetStateAction<string[]>>
+  biases: Bias[] | null
+  setBiases: Dispatch<SetStateAction<Bias[] | null>>
+  biasDecisions: Record<string, 'accepted' | 'rejected' | undefined>
+  setBiasDecisions: Dispatch<SetStateAction<Record<string, 'accepted' | 'rejected' | undefined>>>
 
   // Reset function
   resetSession: () => void

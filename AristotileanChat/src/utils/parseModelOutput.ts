@@ -2,6 +2,9 @@
  * Parses OpenAI response text to extract JSON markers from markdown code blocks
  */
 
+import type { Bias } from '../context/SessionContextDef'
+export type { Bias }
+
 export type ParsedSummary = {
   type: 'summary'
   complete: boolean
@@ -15,7 +18,7 @@ export type ParsedSuggestedIdeas = {
 
 export type ParsedBiases = {
   type: 'biases'
-  items: string[]
+  items: Bias[]
 }
 
 export type ParsedChallengingIdeas = {
@@ -75,7 +78,7 @@ export function extractSuggestedIdeas(parsed: ParsedOutput[]): string[] {
 /**
  * Extracts biases from parsed output
  */
-export function extractBiases(parsed: ParsedOutput[]): string[] {
+export function extractBiases(parsed: ParsedOutput[]): Bias[] {
   const biases = parsed.find((p) => p.type === 'biases')
   return biases ? (biases as ParsedBiases).items : []
 }

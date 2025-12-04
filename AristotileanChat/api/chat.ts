@@ -29,6 +29,7 @@ type ChatRequest = {
   forceSummary?: boolean
   myIdeas?: string[]
   allSuggestedIdeas?: string[]
+  summary?: string
 }
 
 const VALID_MODES = ['define-experience', 'generate-ideas', 'challenge-biases'] as const
@@ -146,6 +147,13 @@ function validateChatRequest(body: unknown): { valid: boolean; error?: string; d
     }
   }
 
+  // Validate summary if provided
+  if (req.summary !== undefined) {
+    if (typeof req.summary !== 'string') {
+      return { valid: false, error: 'summary must be a string' }
+    }
+  }
+
   return {
     valid: true,
     data: {
@@ -155,6 +163,7 @@ function validateChatRequest(body: unknown): { valid: boolean; error?: string; d
       forceSummary: req.forceSummary as boolean | undefined,
       myIdeas: req.myIdeas as string[] | undefined,
       allSuggestedIdeas: req.allSuggestedIdeas as string[] | undefined,
+      summary: req.summary as string | undefined,
     },
   }
 }
@@ -278,7 +287,7 @@ Generate 5-8 diverse, creative ideas that align with the user's personal underst
       const allIdeas = [...(body.myIdeas || []), ...(body.allSuggestedIdeas || [])]
       const ideasList = allIdeas.length > 0 ? allIdeas.join('\n- ') : 'None'
 
-      // Build context from chat history and summary
+      // Build context from chat history
       let contextText = ''
       if (body.history && body.history.length > 0) {
         const historyText = body.history
@@ -287,31 +296,57 @@ Generate 5-8 diverse, creative ideas that align with the user's personal underst
         contextText = `Here is the full conversation from Tab 1 where the user explored their experience:\n\n${historyText}\n\n`
       }
       
-      // Note: body.experience contains the summary for challenge-biases mode
-      const summaryText = body.experience || 'No summary available'
+      const summaryText = body.summary || body.experience || 'No summary available'
 
-      systemPrompt = `You are analyzing the user's interpretation and prior ideas related to this experience.
+      systemPrompt = `You are a reflective bias analyst. The user is exploring the experience of "${body.experience}".
 
-${contextText}Summary of the experience (synthesized from the conversation above): ${summaryText}
+You are given:
+- The full conversation where they defined what this experience means to them.
+- A summary of their interpretation.
+- Their own ideas for places/activities.
+- All ideas (their own + AI-suggested).
+
+Your job:
+
+1) Identify 3–7 meaningful biases or assumptions in how they interpret this experience and how they generate ideas.
+
+2) For EACH bias:
+   - Give it a short title.
+   - Provide a rich explanation in 2–4 sentences that uses concrete examples or phrases from their conversation, summary, or ideas.
+   - Generate 3–6 ideas that specifically challenge THIS bias.
+
+3) Return all biases in a single JSON marker block like:
+
+\`\`\`json
+{
+  "type": "biases",
+  "items": [
+    {
+      "id": "bias_1",
+      "title": "Prefers nature-based retreat",
+      "explanation": "You tend to associate rest after burnout with being in quiet, natural spaces. For example, you mentioned parks, forests, and cabins, and didn't mention any social or urban examples. This suggests you see calm and solitude in nature as the 'correct' way to rest.",
+      "challengingIdeas": [
+        "Attend a low-key community art night in the city",
+        "Co-work in a cozy cafe with a friend",
+        "Take a playful movement class in a studio"
+      ]
+    }
+  ]
+}
+\`\`\`
+
+${contextText}Summary of the experience: ${summaryText}
 
 User's ideas: ${body.myIdeas?.join(', ') || 'None'}
 All AI-suggested ideas: ${ideasList}
 
-Infer potential BIASES from these inputs, considering both the summary and the full conversation context.
-
-Generate ideas that CHALLENGE these biases.
-
-Return TWO JSON marker blocks:
-
-\`\`\`json
-{"type":"biases","items":["bias1","bias2",...]}
-\`\`\`
-
-\`\`\`json
-{"type":"challenging_ideas","items":["idea1","idea2",...]}
-\`\`\`
-
-Identify 3-5 biases and generate 5-8 challenging ideas.`
+Rules:
+- INCLUDE the JSON block exactly once.
+- Use concrete references to the user's words where possible.
+- Explanations must be rich, not one-liners.
+- Do not output any other JSON types.
+- Each bias must have a unique id (bias_1, bias_2, etc.).
+- Each bias must have 3-6 challenging ideas.`
 
       messages = [
         {
@@ -359,8 +394,6 @@ Identify 3-5 biases and generate 5-8 challenging ideas.`
     } else if (body.mode === 'challenge-biases') {
       return res.status(200).json({
         mode: 'challenge-biases',
-        biases: [],
-        challengingIdeas: [],
         rawText,
       })
     }

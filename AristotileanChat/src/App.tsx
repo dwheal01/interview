@@ -17,11 +17,15 @@ function AppContent() {
     <div className="flex h-screen flex-col bg-gray-900 text-gray-100">
       {/* Header Section */}
       <header className="shrink-0 border-b border-gray-700 bg-gray-800">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold text-gray-100 mb-4">
-            Aristotilean<span className="text-blue-400">Chat</span>
-          </h1>
-          <ExperienceInput onExperienceSubmitted={() => setActiveTab('tab1')} />
+        <div className="max-w-7xl mx-auto px-4 py-3">
+          <div className="flex items-center gap-4">
+            <h1 className="text-2xl font-bold text-gray-100 shrink-0">
+              Aristotilean<span className="text-blue-400">Chat</span>
+            </h1>
+            <div className="flex-1 min-w-0">
+              <ExperienceInput onExperienceSubmitted={() => setActiveTab('tab1')} />
+            </div>
+          </div>
         </div>
       </header>
       
