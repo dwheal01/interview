@@ -45,6 +45,18 @@ export type SessionContextType = {
 
   // Reset function
   resetSession: () => void
+  // Import session function
+  importSession: (data: {
+    experience: string
+    tab1History: ChatMessage[]
+    tab1Summary: string | null
+    myIdeas: string[]
+    allSuggestedIdeas: string[]
+    tab3ChallengingIdeas: string[]
+    biases: Bias[] | null
+    biasDecisions: Record<string, 'accepted' | 'rejected' | undefined>
+    biasUserIdeas: Record<string, string[]>
+  }) => void
 }
 
 export const SessionContext = createContext<SessionContextType | undefined>(undefined)
