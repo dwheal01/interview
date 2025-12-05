@@ -7,7 +7,8 @@ A guided human experience brainstorming chatbot built with Vite + React + TypeSc
 - **Tab 1: Define Experience** - Multi-turn Q&A to understand what a human experience means to the user
 - **Tab 2: Generate Ideas** - Expand user-provided ideas with AI suggestions using a chip system
 - **Tab 3: Challenge Biases** - Identify biases in thinking and generate ideas that challenge them. Users can also add their own ideas directly in Tab 3
-- **Export Session** - Export entire interactions as JSON (download or copy to clipboard)
+- **Export/Import Session** - Export entire interactions as JSON (download or copy to clipboard) or import previous sessions to review
+- **Onboarding & Help** - First-time user onboarding modal and always-available help button
 
 ## Tech Stack
 
@@ -165,7 +166,9 @@ AristotelianChat/
 │   │   └── SessionContext.tsx  # Global state management
 │   ├── components/
 │   │   ├── ExperienceInput.tsx
-│   │   ├── ExportButton.tsx     # Export functionality
+│   │   ├── ExportButton.tsx     # Export/Import functionality
+│   │   ├── HelpButton.tsx        # Help/onboarding access
+│   │   ├── OnboardingModal.tsx   # First-time user onboarding
 │   │   ├── ErrorBoundary.tsx     # Error boundary component
 │   │   ├── Tabs/
 │   │   │   ├── Tab1DefineExperience.tsx
@@ -192,7 +195,15 @@ AristotelianChat/
 
 3. **Tab 3**: After generating ideas, the AI analyzes potential biases in the user's thinking and suggests ideas that challenge those biases. Users can accept or reject biases, and add their own ideas directly in Tab 3 (displayed in blue).
 
-4. **Export**: Users can export their entire session (conversation, ideas, biases) as JSON via the Export button in the header. Options include downloading as a file or copying to clipboard.
+4. **Export/Import**:
+
+   - **Export**: Users can export their entire session (conversation, ideas, biases) as JSON via the Export/Import button in the header. Options include downloading as a file or copying to clipboard.
+   - **Import**: Users can import previously exported sessions to review past interactions. The Import button is always available, even before starting a new chat.
+
+5. **Onboarding & Help**:
+   - First-time users see an onboarding modal explaining how the system works
+   - An info icon (ℹ️) in the header provides access to help at any time
+   - The onboarding explains the system's purpose, workflow, and what kind of ideas to enter
 
 All AI responses use hybrid JSON markers embedded in markdown code blocks for structured data extraction while maintaining natural language flow.
 

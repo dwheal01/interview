@@ -4,14 +4,14 @@
 
 ### Error Handling
 
-**Problem**: Using `alert()` for user-facing errors (12 instances)
+**Problem**: Using `alert()` for user-facing errors (15 instances)
 
 - **Impact**: Poor UX, blocks interaction, not accessible, breaks user flow
 - **Locations**:
   - Tab1DefineExperience.tsx: lines 27, 33, 126, 229
   - Tab2GenerateIdeas.tsx: lines 41, 103
   - Tab3ChallengeBiases.tsx: lines 24, 72, 81
-  - ExportButton.tsx: lines 31, 56, 60 (NEW)
+  - ExportButton.tsx: lines 31, 46, 56, 60, 98, 107, 113, 117 (NEW - includes import functionality)
 - **Fix**: Implement a toast/notification system or inline error messages (see StickyNoteBoard example)
 
 ### API Error Exposure
@@ -111,6 +111,9 @@
   - Form inputs (ExperienceInput, Tab1 textarea)
   - Bias card buttons (BiasCard.tsx)
   - Carousel arrows (Tab3ChallengeBiases.tsx)
+  - OnboardingModal (ESC key support added ✅)
+  - HelpButton and ExportButton (NEW)
+- **Note**: OnboardingModal has ESC key support for closing
 - **Fix**:
   - Add proper ARIA labels to all interactive elements
   - Ensure keyboard navigation works (Tab, Enter, Arrow keys)
@@ -153,6 +156,7 @@
   - handleAnalyze (Tab3ChallengeBiases.tsx)
   - handleGenerateMore (Tab2GenerateIdeas.tsx)
   - parseModelOutput (parseModelOutput.ts)
+  - exportUtils.ts functions (validateImportData, convertImportToSessionData) (NEW)
 - **Fix**: Add JSDoc for public APIs, complex functions, and utility functions
 
 ### Missing Loading States
@@ -165,16 +169,25 @@
   - Bias analysis loading (Tab3)
   - Ideas generation (Tab2)
 
-### Export Functionality ✅ ADDED
+### Export/Import Functionality ✅ ADDED
 
-**Status**: ✅ **ADDED** - Export functionality implemented
+**Status**: ✅ **ADDED** - Export and Import functionality implemented
 
 - **Location**: `src/components/ExportButton.tsx`, `src/utils/exportUtils.ts`
-- **Features**:
+- **Export Features**:
   - Export entire session as JSON
   - Download as file or copy to clipboard
   - Includes all conversation, ideas, and bias analysis data
-  - Structured format for future import functionality
+- **Import Features**:
+  - Import previously exported sessions
+  - Validates JSON structure before importing
+  - Restores all session data (conversation, ideas, biases, decisions)
+  - Button shows "Import" when no data exists, "Export/Import" when data exists
+  - Confirms before overwriting current session
+- **Implementation**:
+  - `validateImportData()` validates imported JSON structure
+  - `convertImportToSessionData()` converts export format back to session format
+  - `importSession()` function in SessionContext restores all state
 
 ## Low Priority Issues
 
@@ -207,3 +220,21 @@
 - **Impact**: Memory leaks, state updates on unmounted components
 - **Note**: useAbortController hook exists but not consistently used
 - **Fix**: Ensure all API calls use abort signals and cleanup on unmount
+
+### Onboarding & Help System ✅ ADDED
+
+**Status**: ✅ **ADDED** - Onboarding and help system implemented
+
+- **Location**: `src/components/OnboardingModal.tsx`, `src/components/HelpButton.tsx`
+- **Features**:
+  - Onboarding modal shows automatically on first visit
+  - Explains system purpose, workflow, and what kind of ideas to enter
+  - Help button (info icon) always available in header
+  - Modal can be reopened via help button
+  - ESC key support for closing modal
+  - Uses localStorage to remember if user has seen onboarding
+- **Implementation**:
+  - Modal explains Tab 1 auto-summary behavior
+  - Clarifies what kind of ideas users should enter
+  - Explains Tab 3 user ideas functionality
+  - Matches app's dark theme design

@@ -247,3 +247,36 @@ export const TabComponents = {
 3. Extract mode validation to a separate file — cleaner API code
 
 These changes make the system more maintainable and extensible. Should I implement any of these?
+
+---
+
+## Recent Additions
+
+### Export/Import System ✅ ADDED
+
+**Status**: ✅ **IMPLEMENTED**
+
+- **Location**: `src/utils/exportUtils.ts`, `src/components/ExportButton.tsx`
+- **Features**:
+  - Export session data to JSON format
+  - Import previously exported sessions
+  - Validates imported data structure
+  - Restores full session state
+- **Extensibility**: 
+  - Export format is versioned (`version: "1.0"`)
+  - Validation functions can be extended for new data types
+  - Import/export utilities are separated from UI components
+
+### Onboarding System ✅ ADDED
+
+**Status**: ✅ **IMPLEMENTED**
+
+- **Location**: `src/components/OnboardingModal.tsx`, `src/components/HelpButton.tsx`
+- **Features**:
+  - First-time user onboarding modal
+  - Always-available help button
+  - localStorage-based persistence
+- **Extensibility**:
+  - Modal content can be easily updated
+  - Help system can be extended with context-specific help
+  - Can be extended to show different onboarding for different features

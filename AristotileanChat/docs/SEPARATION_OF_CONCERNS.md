@@ -23,11 +23,13 @@ The codebase has a reasonable structure but mixes concerns in several areas. For
   - `parseModelOutput.ts` - Response parsing logic
   - `messageUtils.ts` - Message creation utilities
   - `validation.ts` - Validation utilities
+  - `exportUtils.ts` - Export/import functionality (NEW)
 - **Status**: Good separation
 - **What's good**:
   - Pure functions, no side effects
   - Reusable across components
   - Easy to test
+  - Export/import utilities properly separated from UI components
 
 ### 3. **Component Structure** ✅
 
@@ -35,7 +37,8 @@ The codebase has a reasonable structure but mixes concerns in several areas. For
 - **What's good**:
   - Components are focused on UI rendering
   - Clear component hierarchy
-  - Presentation components separated (BiasCard, MessageBubble)
+  - Presentation components separated (BiasCard, MessageBubble, OnboardingModal, HelpButton)
+  - Export/Import functionality separated into dedicated component
 
 ### 4. **API Endpoint** ✅
 
