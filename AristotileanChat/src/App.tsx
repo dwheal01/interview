@@ -7,6 +7,8 @@ import { Tab2GenerateIdeas } from './components/Tabs/Tab2GenerateIdeas'
 import { Tab3ChallengeBiases } from './components/Tabs/Tab3ChallengeBiases'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { ExportButton } from './components/ExportButton'
+import { OnboardingModal } from './components/OnboardingModal'
+import { HelpButton } from './components/HelpButton'
 
 function AppContent() {
   const [activeTab, setActiveTab] = useState<'tab1' | 'tab2' | 'tab3'>('tab1')
@@ -17,6 +19,7 @@ function AppContent() {
 
   return (
     <div className="flex h-screen flex-col bg-gray-900 text-gray-100">
+      <OnboardingModal />
       {/* Header Section */}
       <header className="shrink-0 border-b border-gray-700 bg-gray-800">
         <div className="max-w-7xl mx-auto px-4 py-3">
@@ -27,7 +30,8 @@ function AppContent() {
             <div className="flex-1 min-w-0">
               <ExperienceInput onExperienceSubmitted={() => setActiveTab('tab1')} />
             </div>
-            <div className="shrink-0">
+            <div className="shrink-0 flex items-center gap-2">
+              <HelpButton />
               <ExportButton />
             </div>
           </div>
