@@ -27,8 +27,8 @@ export async function searchBooks(
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const data: BookSearchResponse = await response.json();
-    return data;
+    const data = await response.json();
+    return data as BookSearchResponse;
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(`Failed to search books: ${error.message}`);
@@ -43,12 +43,11 @@ export async function searchBooks(
  * @returns Promise with detailed book information
  */
 export async function getBookDetails(bookKey: string): Promise<BookDetails> {
-  if (!bookKey) {
+  if (!bookKey || bookKey.trim() === '') {
     throw new Error('Book key is required');
   }
 
   try {
-    // Remove leading slash if present and ensure proper format
     const normalizedKey = bookKey.startsWith('/') ? bookKey : `/${bookKey}`;
     const response = await fetch(
       `${OPEN_LIBRARY_BASE_URL}${normalizedKey}.json`
@@ -61,9 +60,15 @@ export async function getBookDetails(bookKey: string): Promise<BookDetails> {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const data: BookDetails = await response.json();
-    return data;
+    const data = await response.json();
+    if (!data || typeof data !== 'object') {
+      throw new Error('Invalid response format');
+    }
+    return data as BookDetails;
   } catch (error) {
+    if (error instanceof Error && error.message.includes('Book not found')) {
+      throw error;
+    }
     if (error instanceof Error) {
       throw new Error(`Failed to fetch book details: ${error.message}`);
     }
@@ -78,11 +83,11 @@ export async function getBookDetails(bookKey: string): Promise<BookDetails> {
  * @returns URL string for the cover image
  */
 export function getBookCoverUrl(coverId: number | undefined, size: 'S' | 'M' | 'L' = 'M'): string | null {
-  if (!coverId) {
+  if (!coverId || typeof coverId !== 'number') {
     return null;
   }
 
-  const sizeMap = {
+  const sizeMap: Record<'S' | 'M' | 'L', string> = {
     S: 'S',
     M: 'M',
     L: 'L',
@@ -102,6 +107,9 @@ export function formatAuthors(book: Book): string {
   }
   if (book.authors && book.authors.length > 0) {
     return book.authors.map((a) => a.name).join(', ');
+  }
+  if (book.author_name) {
+    return String(book.author_name);
   }
   return 'Unknown Author';
 }

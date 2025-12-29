@@ -2,13 +2,15 @@ import { useState, useEffect } from 'react';
 import type { BookDetails } from '../types/book';
 import { getBookDetails } from '../services/bookApi';
 import LoadingSpinner from './LoadingSpinner';
+import { getBookCoverUrl, formatAuthors } from '../services/bookApi';
+import type { Book } from '../types/book';
 
 interface BookDetailsModalProps {
-  bookKey: string;
+  book: Book;
   onClose: () => void;
 }
 
-export default function BookDetailsModal({ bookKey, onClose }: BookDetailsModalProps) {
+export default function BookDetailsModal({ book, onClose }: BookDetailsModalProps) {
   const [details, setDetails] = useState<BookDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -18,7 +20,7 @@ export default function BookDetailsModal({ bookKey, onClose }: BookDetailsModalP
       try {
         setLoading(true);
         setError(null);
-        const data = await getBookDetails(bookKey);
+        const data = await getBookDetails(book.key);
         setDetails(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load book details');
@@ -28,29 +30,19 @@ export default function BookDetailsModal({ bookKey, onClose }: BookDetailsModalP
     };
 
     fetchDetails();
-  }, [bookKey]);
+  }, [book.key]);
 
   const getDescription = (): string => {
     if (!details?.description) return 'No description available.';
     if (typeof details.description === 'string') {
       return details.description;
     }
-    return details.description.value || 'No description available.';
+    if (typeof details.description === 'object' && 'value' in details.description) {
+      return details.description.value || 'No description available.';
+    }
+    return 'No description available.';
   };
 
-  const getAuthors = (): string => {
-    if (!details?.authors || details.authors.length === 0) {
-      return 'Unknown Author';
-    }
-    return details.authors.map((a) => a.author.name).join(', ');
-  };
-
-  const getCoverUrl = (): string | null => {
-    if (!details?.covers || details.covers.length === 0) {
-      return null;
-    }
-    return `https://covers.openlibrary.org/b/id/${details.covers[0]}-L.jpg`;
-  };
 
   return (
     <div
@@ -95,16 +87,16 @@ export default function BookDetailsModal({ bookKey, onClose }: BookDetailsModalP
             </div>
 
             <div className="flex gap-6 mb-6">
-              {getCoverUrl() && (
+              {getBookCoverUrl(details.covers?.[0]) && (
                 <img
-                  src={getCoverUrl()!}
+                  src={getBookCoverUrl(details.covers?.[0])!}
                   alt={details.title}
                   className="w-32 h-48 object-cover rounded"
                 />
               )}
               <div className="flex-1">
                 <p className="text-gray-700 mb-2">
-                  <span className="font-semibold">Author(s):</span> {getAuthors()}
+                  <span className="font-semibold">Author(s):</span> {formatAuthors(book)}
                 </p>
                 {details.publish_date && (
                   <p className="text-gray-700 mb-2">
@@ -116,12 +108,12 @@ export default function BookDetailsModal({ bookKey, onClose }: BookDetailsModalP
                     <span className="font-semibold">Pages:</span> {details.number_of_pages}
                   </p>
                 )}
-                {details.isbn_10 && details.isbn_10.length > 0 && (
+                {details.isbn_10 && Array.isArray(details.isbn_10) && details.isbn_10.length > 0 && (
                   <p className="text-gray-700 mb-2">
                     <span className="font-semibold">ISBN-10:</span> {details.isbn_10[0]}
                   </p>
                 )}
-                {details.isbn_13 && details.isbn_13.length > 0 && (
+                {details.isbn_13 && Array.isArray(details.isbn_13) && details.isbn_13.length > 0 && (
                   <p className="text-gray-700 mb-2">
                     <span className="font-semibold">ISBN-13:</span> {details.isbn_13[0]}
                   </p>

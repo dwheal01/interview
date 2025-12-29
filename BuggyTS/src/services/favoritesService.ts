@@ -8,7 +8,11 @@ export function getFavorites(): Book[] {
     if (!stored) {
       return [];
     }
-    return JSON.parse(stored);
+    const parsed = JSON.parse(stored);
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+    return parsed;
   } catch (error) {
     console.error('Failed to load favorites:', error);
     return [];

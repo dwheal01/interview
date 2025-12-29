@@ -47,7 +47,7 @@ export default function BookCard({ book, onClick, onToggleFavorite }: BookCardPr
               {favorite ? '❤️' : '🤍'}
             </button>
           )}
-          <h3 className="font-semibold text-lg mb-2 line-clamp-2 pr-8">{book.title}</h3>
+          <h3 className="font-semibold text-lg mb-2 line-clamp-2 pr-8">{book.title || 'Untitled'}</h3>
           <p className="text-gray-600 text-sm mb-2">{authors}</p>
           {book.first_publish_year && (
             <p className="text-gray-500 text-xs">Published: {book.first_publish_year}</p>

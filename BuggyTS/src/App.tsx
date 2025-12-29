@@ -13,7 +13,7 @@ function App() {
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedBookKey, setSelectedBookKey] = useState<string | null>(null);
+  const [selectedBook, setSelectedBook] = useState<Book | undefined>(undefined);
   const [hasSearched, setHasSearched] = useState(false);
   const [page, setPage] = useState(1);
   const [totalBooks, setTotalBooks] = useState(0);
@@ -28,13 +28,13 @@ function App() {
     setLoading(true);
     setError(null);
     setHasSearched(true);
-    setSelectedBookKey(null);
+    setSelectedBook(undefined);
 
     try {
       const offset = (pageNum - 1) * RESULTS_PER_PAGE;
       const response = await searchBooks(query, RESULTS_PER_PAGE, offset);
-      setBooks(response.docs);
-      setTotalBooks(response.numFound);
+      setBooks(response.docs || []);
+      setTotalBooks(response.numFound || 0);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred while searching for books');
       setBooks([]);
@@ -46,12 +46,10 @@ function App() {
   const handleSearch = async (query: string) => {
     setCurrentQuery(query);
     setPage(1);
-    await performSearch(query, page);
+    await performSearch(query, 1);
   };
 
   const handleNextPage = () => {
-    // Bug: Race condition - using page directly instead of functional update
-    // Bug: Wrong condition - should check if we've reached the last page
     if (currentQuery && page * RESULTS_PER_PAGE < totalBooks) {
       setPage(page + 1);
       performSearch(currentQuery, page + 1);
@@ -60,18 +58,17 @@ function App() {
 
   const handlePreviousPage = () => {
     if (page > 1) {
-      // Bug: Race condition - using page directly
       setPage(page - 1);
       performSearch(currentQuery, page - 1);
     }
   };
 
   const handleBookClick = (book: Book) => {
-    setSelectedBookKey(book.key);
+    setSelectedBook(book);
   };
 
   const handleCloseModal = () => {
-    setSelectedBookKey(null);
+    setSelectedBook(undefined);
   };
 
   const handleToggleFavorite = (book: Book) => {
@@ -85,7 +82,6 @@ function App() {
     }
   };
 
-  // Bug: Wrong condition for right arrow - should be (page - 1) * RESULTS_PER_PAGE + RESULTS_PER_PAGE < totalBooks
   const showLeftArrow = page > 1;
   const showRightArrow = page * RESULTS_PER_PAGE < totalBooks;
 
@@ -218,8 +214,8 @@ function App() {
           </div>
         )}
 
-        {selectedBookKey && (
-          <BookDetailsModal bookKey={selectedBookKey} onClose={handleCloseModal} />
+        {selectedBook && (
+          <BookDetailsModal book={selectedBook} onClose={handleCloseModal} />
         )}
       </div>
     </div>
