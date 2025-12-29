@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { BookDetails } from '../types/book';
 import { getBookDetails } from '../services/bookApi';
+import LoadingSpinner from './LoadingSpinner';
 
 interface BookDetailsModalProps {
   bookKey: string;
@@ -62,7 +63,7 @@ export default function BookDetailsModal({ bookKey, onClose }: BookDetailsModalP
       >
         {loading && (
           <div className="p-8 text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <LoadingSpinner />
             <p className="mt-4 text-gray-600">Loading book details...</p>
           </div>
         )}
