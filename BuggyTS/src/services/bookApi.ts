@@ -6,11 +6,13 @@ const OPEN_LIBRARY_BASE_URL = 'https://openlibrary.org';
  * Fetches books from Open Library API based on search query
  * @param query - Search term for books
  * @param limit - Maximum number of results to return (default: 20)
+ * @param offset - Starting index for pagination (default: 0)
  * @returns Promise with book search results
  */
 export async function searchBooks(
   query: string,
-  limit: number = 20
+  limit: number = 20,
+  offset: number = 0
 ): Promise<BookSearchResponse> {
   if (!query.trim()) {
     throw new Error('Search query cannot be empty');
@@ -18,7 +20,7 @@ export async function searchBooks(
 
   try {
     const response = await fetch(
-      `${OPEN_LIBRARY_BASE_URL}/search.json?q=${encodeURIComponent(query)}&limit=${limit}`
+      `${OPEN_LIBRARY_BASE_URL}/search.json?q=${encodeURIComponent(query)}&limit=${limit}&offset=${offset}`
     );
 
     if (!response.ok) {
