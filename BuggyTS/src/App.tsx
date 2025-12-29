@@ -75,8 +75,6 @@ function App() {
   };
 
   const handleToggleFavorite = (book: Book) => {
-    console.log("toggle favorite", book.key);
-    // const isFav = favorites.some((f) => f.key === book.key);
     const isFav = isFavorite(book.key);
     if (isFav) {
       removeFavorite(book.key);
