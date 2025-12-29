@@ -26,8 +26,7 @@ function App() {
     setSelectedBookKey(null);
 
     try {
-      // Bug: Off-by-one error - should be (pageNum - 1) * RESULTS_PER_PAGE
-      const offset = pageNum * RESULTS_PER_PAGE;
+      const offset = (pageNum - 1) * RESULTS_PER_PAGE;
       const response = await searchBooks(query, RESULTS_PER_PAGE, offset);
       setBooks(response.docs);
       setTotalBooks(response.numFound);
@@ -40,8 +39,8 @@ function App() {
   };
 
   const handleSearch = async (query: string) => {
-    // Bug: Not resetting page to 1 on new search
     setCurrentQuery(query);
+    setPage(1);
     await performSearch(query, page);
   };
 
@@ -134,7 +133,7 @@ function App() {
         {!loading && !error && hasSearched && (
           <div className="mb-4">
             <p className="text-gray-600">
-              Found {totalBooks} {totalBooks === 1 ? 'book' : 'books'}
+              Displaying {(page - 1) * RESULTS_PER_PAGE + 1} - {Math.min(page * RESULTS_PER_PAGE, totalBooks)} out of {totalBooks} {totalBooks === 1 ? 'book' : 'books'}
               {/* Bug: Showing wrong page info - should show current page range */}
               {totalBooks > 0 && ` (Page ${page})`}
             </p>
