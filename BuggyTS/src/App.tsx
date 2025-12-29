@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import type { Book } from './types/book';
 import { searchBooks } from './services/bookApi';
+import { addFavorite, removeFavorite } from './services/favoritesService';
 import BookSearch from './components/BookSearch';
 import BookList from './components/BookList';
 import LoadingSpinner from './components/LoadingSpinner';
 import ErrorMessage from './components/ErrorMessage';
 import BookDetailsModal from './components/BookDetailsModal';
+import FavoritesView from './components/FavoritesView';
 
 function App() {
   const [books, setBooks] = useState<Book[]>([]);
@@ -16,8 +18,11 @@ function App() {
   const [page, setPage] = useState(1);
   const [totalBooks, setTotalBooks] = useState(0);
   const [currentQuery, setCurrentQuery] = useState('');
+  const [favorites, setFavorites] = useState<Book[]>([]);
+  const [showFavorites, setShowFavorites] = useState(false);
 
   const RESULTS_PER_PAGE = 20;
+
 
   const performSearch = async (query: string, pageNum: number) => {
     setLoading(true);
@@ -69,6 +74,16 @@ function App() {
     setSelectedBookKey(null);
   };
 
+  const handleToggleFavorite = (book: Book) => {
+    const isFav = favorites.some((f) => f.key === book.key);
+    if (isFav) {
+      removeFavorite(book.key);
+    } else {
+      addFavorite(book);
+      setFavorites([...favorites, book]);
+    }
+  };
+
   // Bug: Wrong condition for right arrow - should be (page - 1) * RESULTS_PER_PAGE + RESULTS_PER_PAGE < totalBooks
   const showLeftArrow = page > 1;
   const showRightArrow = page * RESULTS_PER_PAGE < totalBooks;
@@ -112,41 +127,79 @@ function App() {
         <header className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-800 mb-2">📚 Library Search</h1>
           <p className="text-gray-600">Search for books using the Open Library API</p>
+          <div className="mt-4 flex justify-center gap-4">
+            <button
+              onClick={() => setShowFavorites(false)}
+              className={`px-4 py-2 rounded-lg transition-colors ${
+                !showFavorites
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              Search
+            </button>
+            <button
+              onClick={() => setShowFavorites(true)}
+              className={`px-4 py-2 rounded-lg transition-colors ${
+                showFavorites
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              Favorites ({favorites.length})
+            </button>
+          </div>
         </header>
 
-        <BookSearch onSearch={handleSearch} isLoading={loading} />
-
-        {error && (
-          <ErrorMessage
-            message={error}
-            onRetry={() => {
-              const lastQuery = document.querySelector('input[type="text"]') as HTMLInputElement;
-              if (lastQuery?.value) {
-                handleSearch(lastQuery.value);
-              }
-            }}
-          />
-        )}
-
-        {loading && <LoadingSpinner />}
-
-        {!loading && !error && hasSearched && (
-          <div className="mb-4">
-            <p className="text-gray-600">
-              Displaying {(page - 1) * RESULTS_PER_PAGE + 1} - {Math.min(page * RESULTS_PER_PAGE, totalBooks)} out of {totalBooks} {totalBooks === 1 ? 'book' : 'books'}
-              {/* Bug: Showing wrong page info - should show current page range */}
-              {totalBooks > 0 && ` (Page ${page})`}
-            </p>
+        {showFavorites ? (
+          <div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">My Favorite Books</h2>
+            <FavoritesView
+              favorites={favorites}
+              onBookClick={handleBookClick}
+              onToggleFavorite={handleToggleFavorite}
+            />
           </div>
+        ) : (
+          <>
+            <BookSearch onSearch={handleSearch} isLoading={loading} />
+
+            {error && (
+              <ErrorMessage
+                message={error}
+                onRetry={() => {
+                  const lastQuery = document.querySelector('input[type="text"]') as HTMLInputElement;
+                  if (lastQuery?.value) {
+                    handleSearch(lastQuery.value);
+                  }
+                }}
+              />
+            )}
+
+            {loading && <LoadingSpinner />}
+
+            {!loading && !error && hasSearched && (
+              <div className="mb-4">
+                <p className="text-gray-600">
+                  Displaying {(page - 1) * RESULTS_PER_PAGE + 1} - {Math.min(page * RESULTS_PER_PAGE, totalBooks)} out of {totalBooks} {totalBooks === 1 ? 'book' : 'books'}
+                  {totalBooks > 0 && ` (Page ${page})`}
+                </p>
+              </div>
+            )}
+
+            <PaginationArrows />
+
+            {!loading && !error && (
+              <BookList
+                books={books}
+                onBookClick={handleBookClick}
+                onToggleFavorite={handleToggleFavorite}
+              />
+            )}
+
+            <PaginationArrows />
+          </>
         )}
-
-        {/* Top pagination arrows */}
-        <PaginationArrows />
-
-        {!loading && !error && <BookList books={books} onBookClick={handleBookClick} />}
-
-        {/* Bottom pagination arrows */}
-        <PaginationArrows />
 
         {!hasSearched && !loading && (
           <div className="text-center py-12">
