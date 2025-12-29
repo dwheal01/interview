@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { Book } from './types/book';
 import { searchBooks } from './services/bookApi';
-import { addFavorite, removeFavorite } from './services/favoritesService';
+import { addFavorite, removeFavorite, getFavorites, isFavorite } from './services/favoritesService';
 import BookSearch from './components/BookSearch';
 import BookList from './components/BookList';
 import LoadingSpinner from './components/LoadingSpinner';
@@ -18,7 +18,7 @@ function App() {
   const [page, setPage] = useState(1);
   const [totalBooks, setTotalBooks] = useState(0);
   const [currentQuery, setCurrentQuery] = useState('');
-  const [favorites, setFavorites] = useState<Book[]>([]);
+  const [favorites, setFavorites] = useState<Book[]>(getFavorites());
   const [showFavorites, setShowFavorites] = useState(false);
 
   const RESULTS_PER_PAGE = 20;
@@ -75,12 +75,15 @@ function App() {
   };
 
   const handleToggleFavorite = (book: Book) => {
-    const isFav = favorites.some((f) => f.key === book.key);
+    console.log("toggle favorite", book.key);
+    // const isFav = favorites.some((f) => f.key === book.key);
+    const isFav = isFavorite(book.key);
     if (isFav) {
       removeFavorite(book.key);
+      setFavorites(getFavorites());
     } else {
       addFavorite(book);
-      setFavorites([...favorites, book]);
+      setFavorites(getFavorites());
     }
   };
 
